@@ -252,7 +252,7 @@ void ControlComponent::set_terminal_echo(bool enabled) {
 }
 
 void ControlComponent::CheckJoy() {
-    const char* inputDevPath = "/dev/input/event7";  //终端使用evtest查看  
+    const char* inputDevPath = "/dev/input/event14";  //终端使用evtest查看  
     int inputDev;
     
     inputDev = open(inputDevPath, O_RDONLY);
@@ -355,7 +355,7 @@ void ControlComponent::CheckJoy() {
           }
         }
       }
-     usleep(30000);
+     usleep(10000);
     }   
 }
 

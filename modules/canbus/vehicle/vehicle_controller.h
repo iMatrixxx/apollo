@@ -344,6 +344,9 @@ ErrorCode VehicleController<SensorType>::Update(
         ProcessCommandChange(control_command.signal(), &last_control_command_));
   }
 
+  Throttle(control_command.throttle());
+  Brake(control_command.brake());
+  Steer(control_command.steering_rate());
   return ErrorCode::OK;
 }
 
