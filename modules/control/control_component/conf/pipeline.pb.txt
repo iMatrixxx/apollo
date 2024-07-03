@@ -1,0 +1,4 @@
+controller {
+  name: "MPC_CONTROLLER"
+  type: "MPCController"
+}
