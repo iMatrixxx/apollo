@@ -139,16 +139,17 @@ bool ExternalCommandDemo::Proc() {
         RestoreSpeed();
       } else if (input_command_string == "lane") {
         // Modify way point as needed.
+        // start point 238371.62, 3493719.17, -1.55; end point 238466.47, 3493698.02, -0.01;
         apollo::external_command::Pose way_point;
-        way_point.set_x(0.0);
-        way_point.set_y(0.0);
-        way_point.set_heading(0.0);
+        way_point.set_x(238371.62);
+        way_point.set_y(3493719.17);
+        way_point.set_heading(-1.55);
         std::vector<apollo::external_command::Pose> way_points;
         way_points.emplace_back(way_point);
         apollo::external_command::Pose end_pose;
-        end_pose.set_x(10.0);
-        end_pose.set_y(0.0);
-        end_pose.set_heading(0.0);
+        end_pose.set_x(238466.47);
+        end_pose.set_y(3493698.02);
+        end_pose.set_heading(-0.01);
         SendLaneFollowCommand(way_points, end_pose,
                               demo_config_.target_speed());
       } else if (input_command_string == "path_loc") {

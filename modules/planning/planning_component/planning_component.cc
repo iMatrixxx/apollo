@@ -117,17 +117,18 @@ bool PlanningComponent::Init() {
 }
 
 bool PlanningComponent::Proc(
-    const std::shared_ptr<prediction::PredictionObstacles>&
-        prediction_obstacles,
     const std::shared_ptr<canbus::Chassis>& chassis,
     const std::shared_ptr<localization::LocalizationEstimate>&
         localization_estimate) {
+  std::shared_ptr<prediction::PredictionObstacles> prediction_obstacles =
+      std::make_shared<prediction::PredictionObstacles>();
   ACHECK(prediction_obstacles != nullptr);
 
   // check and process possible rerouting request
   CheckRerouting();
 
   // process fused input data
+
   local_view_.prediction_obstacles = prediction_obstacles;
   local_view_.chassis = chassis;
   local_view_.localization_estimate = localization_estimate;
