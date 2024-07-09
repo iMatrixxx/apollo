@@ -252,7 +252,7 @@ void ControlComponent::set_terminal_echo(bool enabled) {
 }
 
 void ControlComponent::CheckJoy() {
-    const char* inputDevPath = "/dev/input/event14";  //终端使用evtest查看  
+    const char* inputDevPath = "/dev/input/event3";  //终端使用evtest查看  
     int inputDev;
     
     inputDev = open(inputDevPath, O_RDONLY);
@@ -668,7 +668,6 @@ bool ControlComponent::Proc() {
       OnPlanning(trajectory_msg);
     }
   }
-
   planning_command_status_reader_->Observe();
   const auto &planning_status_msg =
       planning_command_status_reader_->GetLatestObserved();
@@ -677,13 +676,13 @@ bool ControlComponent::Proc() {
     ADEBUG << "Planning command status msg is \n"
            << planning_command_status_.ShortDebugString();
   }
-  // injector_->set_planning_command_status(planning_command_status_);
+  //injector_->set_planning_command_status(planning_command_status_);
 
   localization_reader_->Observe();
   const auto &localization_msg = localization_reader_->GetLatestObserved();
   if (localization_msg == nullptr) {
     AERROR << "localization msg is not ready!";
-    injector_->set_control_process(false);
+    // injector_->set_control_process(false);
     return false;
   }
   OnLocalization(localization_msg);
@@ -706,46 +705,46 @@ bool ControlComponent::Proc() {
   }
 
   // use control submodules
-  if (FLAGS_use_control_submodules) {
-    local_view_.mutable_header()->set_lidar_timestamp(
-        local_view_.trajectory().header().lidar_timestamp());
-    local_view_.mutable_header()->set_camera_timestamp(
-        local_view_.trajectory().header().camera_timestamp());
-    local_view_.mutable_header()->set_radar_timestamp(
-        local_view_.trajectory().header().radar_timestamp());
-    common::util::FillHeader(FLAGS_control_local_view_topic, &local_view_);
+  // if (FLAGS_use_control_submodules) {
+  //   local_view_.mutable_header()->set_lidar_timestamp(
+  //       local_view_.trajectory().header().lidar_timestamp());
+  //   local_view_.mutable_header()->set_camera_timestamp(
+  //       local_view_.trajectory().header().camera_timestamp());
+  //   local_view_.mutable_header()->set_radar_timestamp(
+  //       local_view_.trajectory().header().radar_timestamp());
+  //   common::util::FillHeader(FLAGS_control_local_view_topic, &local_view_);
 
-    const auto end_time = Clock::Now();
+  //   const auto end_time = Clock::Now();
 
-    // measure latency
-    static apollo::common::LatencyRecorder latency_recorder(
-        FLAGS_control_local_view_topic);
-    latency_recorder.AppendLatencyRecord(
-        local_view_.trajectory().header().lidar_timestamp(), start_time,
-        end_time);
+  //   // measure latency
+  //   static apollo::common::LatencyRecorder latency_recorder(
+  //       FLAGS_control_local_view_topic);
+  //   latency_recorder.AppendLatencyRecord(
+  //       local_view_.trajectory().header().lidar_timestamp(), start_time,
+  //       end_time);
 
-    local_view_writer_->Write(local_view_);
-    return true;
-  }
+  //   local_view_writer_->Write(local_view_);
+  //   return true;
+  // }
 
-  if (pad_msg != nullptr) {
-    ADEBUG << "pad_msg: " << pad_msg_.ShortDebugString();
-    if (pad_msg_.action() == DrivingAction::RESET) {
-      AINFO << "Control received RESET action!";
-      estop_ = false;
-      estop_reason_.clear();
-    }
-    pad_received_ = true;
-  }
+  // if (pad_msg != nullptr) {
+  //   ADEBUG << "pad_msg: " << pad_msg_.ShortDebugString();
+  //   if (pad_msg_.action() == DrivingAction::RESET) {
+  //     AINFO << "Control received RESET action!";
+  //     estop_ = false;
+  //     estop_reason_.clear();
+  //   }
+  //   pad_received_ = true;
+  // }
 
-  if (FLAGS_is_control_test_mode && FLAGS_control_test_duration > 0 &&
-      (start_time - init_time_).ToSecond() > FLAGS_control_test_duration) {
-    AERROR << "Control finished testing. exit";
-    injector_->set_control_process(false);
-    return false;
-  }
+  // if (FLAGS_is_control_test_mode && FLAGS_control_test_duration > 0 &&
+  //     (start_time - init_time_).ToSecond() > FLAGS_control_test_duration) {
+  //   AERROR << "Control finished testing. exit";
+  //   injector_->set_control_process(false);
+  //   return false;
+  // }
 
-  injector_->set_control_process(true);
+  // injector_->set_control_process(true);
   
   ControlCommand control_command;
   local_view_.mutable_chassis()->set_driving_mode(apollo::canbus::Chassis::COMPLETE_AUTO_DRIVE);

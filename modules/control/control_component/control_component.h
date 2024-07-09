@@ -196,10 +196,11 @@ class ControlComponent final : public apollo::cyber::TimerComponent {
   bool key_shift_ = false;
   bool key_p_     = false;
   bool is_first = true;
-  bool is_switch = true;
+  bool is_switch = false;
 
-  double scale = 6.756;
+  //double scale = 6.756;
   //double scale = 14.95;
+  double scale = 16.55;
   //double scale = 17.25;
   
 };

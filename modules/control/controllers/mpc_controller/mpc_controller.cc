@@ -410,25 +410,25 @@ Status MPCController::ComputeControlCommand(
   FeedforwardUpdate(debug);
 
   // Add gain scheduler for higher speed steering
-  if (FLAGS_enable_gain_scheduler) {
-    matrix_q_updated_(0, 0) =
-        matrix_q_(0, 0) *
-        lat_err_interpolation_->Interpolate(vehicle_state->linear_velocity());
-    matrix_q_updated_(2, 2) =
-        matrix_q_(2, 2) * heading_err_interpolation_->Interpolate(
-                              vehicle_state->linear_velocity());
-    steer_angle_feedforwardterm_updated_ =
-        steer_angle_feedforwardterm_ *
-        feedforwardterm_interpolation_->Interpolate(
-            vehicle_state->linear_velocity());
-    matrix_r_updated_(0, 0) =
-        matrix_r_(0, 0) * steer_weight_interpolation_->Interpolate(
-                              vehicle_state->linear_velocity());
-  } else {
+  // if (FLAGS_enable_gain_scheduler) {
+  //   matrix_q_updated_(0, 0) =
+  //       matrix_q_(0, 0) *
+  //       lat_err_interpolation_->Interpolate(vehicle_state->linear_velocity());
+  //   matrix_q_updated_(2, 2) =
+  //       matrix_q_(2, 2) * heading_err_interpolation_->Interpolate(
+  //                             vehicle_state->linear_velocity());
+  //   steer_angle_feedforwardterm_updated_ =
+  //       steer_angle_feedforwardterm_ *
+  //       feedforwardterm_interpolation_->Interpolate(
+  //           vehicle_state->linear_velocity());
+  //   matrix_r_updated_(0, 0) =
+  //       matrix_r_(0, 0) * steer_weight_interpolation_->Interpolate(
+  //                             vehicle_state->linear_velocity());
+  // } else {
     matrix_q_updated_ = matrix_q_;
     matrix_r_updated_ = matrix_r_;
     steer_angle_feedforwardterm_updated_ = steer_angle_feedforwardterm_;
-  }
+  //}
 
   debug->add_matrix_q_updated(matrix_q_updated_(0, 0));
   debug->add_matrix_q_updated(matrix_q_updated_(1, 1));
@@ -503,22 +503,22 @@ Status MPCController::ComputeControlCommand(
   ADEBUG << "MPC core algorithm: calculation time is: "
          << (mpc_end_timestamp - mpc_start_timestamp) * 1000 << " ms.";
 
-  if (enable_leadlag_) {
-    if (control_conf_.enable_feedback_augment_on_high_speed() ||
-        std::fabs(vehicle_state->linear_velocity()) < low_speed_bound_) {
-      steer_angle_feedback_augment =
-          leadlag_controller_.Control(-matrix_state_(0, 0), ts_) * 180 / M_PI *
-          steer_ratio_ / steer_single_direction_max_degree_ * 100;
-      if (std::fabs(vehicle_state->linear_velocity()) >
-          low_speed_bound_ - low_speed_window_) {
-        // Within the low-high speed transition window, linerly interplolate the
-        // augment control gain for "soft" control switch
-        steer_angle_feedback_augment = common::math::lerp(
-            steer_angle_feedback_augment, low_speed_bound_ - low_speed_window_,
-            0.0, low_speed_bound_, std::fabs(vehicle_state->linear_velocity()));
-      }
-    }
-  }
+  // if (enable_leadlag_) {
+  //   if (control_conf_.enable_feedback_augment_on_high_speed() ||
+  //       std::fabs(vehicle_state->linear_velocity()) < low_speed_bound_) {
+  //     steer_angle_feedback_augment =
+  //         leadlag_controller_.Control(-matrix_state_(0, 0), ts_) * 180 / M_PI *
+  //         steer_ratio_ / steer_single_direction_max_degree_ * 100;
+  //     if (std::fabs(vehicle_state->linear_velocity()) >
+  //         low_speed_bound_ - low_speed_window_) {
+  //       // Within the low-high speed transition window, linerly interplolate the
+  //       // augment control gain for "soft" control switch
+  //       steer_angle_feedback_augment = common::math::lerp(
+  //           steer_angle_feedback_augment, low_speed_bound_ - low_speed_window_,
+  //           0.0, low_speed_bound_, std::fabs(vehicle_state->linear_velocity()));
+  //     }
+  //   }
+  // }
 
   // TODO(QiL): evaluate whether need to add spline smoothing after the result
   double steer_angle =
@@ -549,38 +549,38 @@ Status MPCController::ComputeControlCommand(
   // TODO(QiL): add pitch angle feed forward to accommodate for 3D control
 
   GetPathRemain(planning_published_trajectory, debug);
-  // TODO(Yu): study the necessity of path_remain and add it to MPC if needed
-  // At near-stop stage, replace the brake control command with the standstill
-  // acceleration if the former is even softer than the latter
-  if ((planning_published_trajectory->trajectory_type() ==
-       apollo::planning::ADCTrajectory::NORMAL) ||
-      (planning_published_trajectory->trajectory_type() ==
-       apollo::planning::ADCTrajectory::SPEED_FALLBACK) ||
-      (planning_published_trajectory->trajectory_type() ==
-       apollo::planning::ADCTrajectory::UNKNOWN)) {
-    if (control_conf_.use_preview_reference_check() &&
-        (std::fabs(debug->preview_acceleration_reference()) <=
-         FLAGS_max_acceleration_when_stopped) &&
-        std::fabs(debug->preview_speed_reference()) <=
-            vehicle_param_.max_abs_speed_when_stopped()) {
-      debug->set_is_full_stop(true);
-      ADEBUG << "Into full stop within preview acc and reference speed, "
-             << "is_full_stop is " << debug->is_full_stop();
-    }
-    if (std::abs(debug->path_remain()) < FLAGS_max_acceleration_when_stopped) {
-      debug->set_is_full_stop(true);
-      ADEBUG << "Into full stop within path remain, "
-             << "is_full_stop is " << debug->is_full_stop();
-    }
-  }
+  // // TODO(Yu): study the necessity of path_remain and add it to MPC if needed
+  // // At near-stop stage, replace the brake control command with the standstill
+  // // acceleration if the former is even softer than the latter
+  // if ((planning_published_trajectory->trajectory_type() ==
+  //      apollo::planning::ADCTrajectory::NORMAL) ||
+  //     (planning_published_trajectory->trajectory_type() ==
+  //      apollo::planning::ADCTrajectory::SPEED_FALLBACK) ||
+  //     (planning_published_trajectory->trajectory_type() ==
+  //      apollo::planning::ADCTrajectory::UNKNOWN)) {
+  //   if (control_conf_.use_preview_reference_check() &&
+  //       (std::fabs(debug->preview_acceleration_reference()) <=
+  //        FLAGS_max_acceleration_when_stopped) &&
+  //       std::fabs(debug->preview_speed_reference()) <=
+  //           vehicle_param_.max_abs_speed_when_stopped()) {
+  //     debug->set_is_full_stop(true);
+  //     ADEBUG << "Into full stop within preview acc and reference speed, "
+  //            << "is_full_stop is " << debug->is_full_stop();
+  //   }
+  //   if (std::abs(debug->path_remain()) < FLAGS_max_acceleration_when_stopped) {
+  //     debug->set_is_full_stop(true);
+  //     ADEBUG << "Into full stop within path remain, "
+  //            << "is_full_stop is " << debug->is_full_stop();
+  //   }
+  // }
 
-  if (debug->is_full_stop()) {
-    acceleration_cmd =
-        (chassis->gear_location() == canbus::Chassis::GEAR_REVERSE)
-            ? std::max(acceleration_cmd, standstill_acceleration_)
-            : std::min(acceleration_cmd, standstill_acceleration_);
-    Reset();
-  }
+  // if (debug->is_full_stop()) {
+  //   acceleration_cmd =
+  //       (chassis->gear_location() == canbus::Chassis::GEAR_REVERSE)
+  //           ? std::max(acceleration_cmd, standstill_acceleration_)
+  //           : std::min(acceleration_cmd, standstill_acceleration_);
+  //   Reset();
+  // }
 
   debug->set_acceleration_cmd(acceleration_cmd);
 
@@ -656,7 +656,7 @@ Status MPCController::ComputeControlCommand(
     cmd->set_gear_location(chassis->gear_location());
   }
 
-  ProcessLogs(debug, chassis);
+  //ProcessLogs(debug, chassis);
   return Status::OK();
 }
 
