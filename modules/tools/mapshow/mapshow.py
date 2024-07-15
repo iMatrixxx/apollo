@@ -16,6 +16,10 @@
 # limitations under the License.
 ###############################################################################
 
+import sys
+sys.path.append("/apollo/")
+sys.path.append("/apollo/bazel-bin/")
+
 import argparse
 
 import matplotlib.pyplot as plt

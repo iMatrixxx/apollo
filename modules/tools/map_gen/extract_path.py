@@ -27,6 +27,8 @@ See the gflags for more optional args.
 """
 
 import sys
+sys.path.append("/apollo/")
+sys.path.append("/apollo/bazel-bin/")
 from cyber.python.cyber_py3 import cyber
 from cyber.python.cyber_py3.record import RecordReader
 from modules.common_msgs.localization_msgs import localization_pb2

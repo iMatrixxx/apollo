@@ -18,6 +18,9 @@
 """
 Convert a base map from txt to bin format
 """
+import sys
+sys.path.append("/apollo/")
+sys.path.append("/apollo/bazel-bin/")
 
 import argparse
 from modules.common_msgs.map_msgs.map_pb2 import Map

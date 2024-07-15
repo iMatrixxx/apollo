@@ -18,6 +18,8 @@
 
 import math
 import sys
+sys.path.append("/apollo/")
+sys.path.append("/apollo/bazel-bin/")
 
 from modules.common_msgs.map_msgs import map_pb2
 from modules.common_msgs.map_msgs import map_lane_pb2
@@ -104,7 +106,8 @@ with open(fpath, 'r') as f:
 path = LineString(points)
 length = int(path.length)
 
-fmap = open("map_" + fpath.split("/")[-1] + ".txt", 'w')
+fmap = open(sys.argv[2], 'w')
+
 id = 0
 map = map_pb2.Map()
 road = map.road.add()
