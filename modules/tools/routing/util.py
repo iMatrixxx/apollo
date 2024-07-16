@@ -30,6 +30,11 @@ from pathlib import Path
 
 FLAGS = gflags.FLAGS
 gflags.DEFINE_string('map_dir', 'modules/map/data/demo', 'map directory')
+gflags.DEFINE_boolean('use_sim_time', False, 'map directory')
+gflags.DEFINE_boolean('use_cyber_time', True, 'map directory')
+gflags.DEFINE_boolean('use_navigation_mode', False, 'map directory')
+gflags.DEFINE_string('log_dir', 'modules/map/data/demo', 'map directory')
+gflags.DEFINE_string('vehicle_config_path', 'modules/map/data/demo', 'map directory')
 
 def check_file(file_path, origin_apollo_path):
     file_wrapper = Path(file_path)

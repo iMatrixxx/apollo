@@ -19,12 +19,16 @@
 import itertools
 import os
 import sys
+sys.path.append("/apollo/")
+sys.path.append("/apollo/bazel-bin/")
 
 import gflags
 import matplotlib.pyplot as plt
 
+from cyber.python.cyber_py3.record import RecordReader
 import modules.tools.routing.debug_topo as debug_topo
 import modules.routing.proto.topo_graph_pb2 as topo_graph_pb2
+import modules.common_msgs.routing_msgs.routing_pb2 as routing_pb2
 import modules.tools.routing.util as util
 
 color_iter = itertools.cycle(
@@ -50,18 +54,20 @@ def plot_route(lanes, central_curve_dict):
     """Plot route result"""
     plt.close()
     plt.figure()
-    for lane in lanes:
-        lane_id = lane['id']
-        if lane['is virtual']:
-            color = 'red'
-        else:
-            color = 'green'
-        mid_pt = debug_topo.plot_central_curve_with_s_range(
-            central_curve_dict[lane_id],
-            lane['start s'],
-            lane['end s'],
-            color=color)
-        debug_topo.draw_id(mid_pt, lane_id, 'y')
+    for road in lanes:
+        for passage in road.passage:
+            for lane in passage.segment:
+                lane_id = lane.id
+                if 1: #lane.is_virtual:
+                    color = 'red'
+                else:
+                    color = 'green'
+                mid_pt = debug_topo.plot_central_curve_with_s_range(
+                    central_curve_dict[lane_id],
+                    lane.start_s,
+                    lane.end_s,
+                    color=color)
+                debug_topo.draw_id(mid_pt, lane_id, 'y')
     plt.gca().set_aspect(1)
     plt.title('Routing result')
     plt.xlabel('x')
@@ -89,30 +95,35 @@ if __name__ == '__main__':
     map_dir = util.get_map_dir(sys.argv)
     graph = util.get_topodata(map_dir)
     base_map = util.get_mapdata(map_dir)
-    route = util.get_routingdata()
+    
+    reader = RecordReader("/apollo/data/bag/test.record.00000.20240716170235")
+    for msg in reader.read_messages():
+        if msg.topic == "/apollo/routing_response":
+            route = routing_pb2.RoutingResponse()
+            route.ParseFromString(msg.message)
+            
+            central_curves = {}
+            for nd in graph.node:
+                central_curves[nd.lane_id] = nd.central_curve
 
-    central_curves = {}
-    for nd in graph.node:
-        central_curves[nd.lane_id] = nd.central_curve
+            plt.ion()
+            while 1:
+                print_help_command()
+                print('cmd>', end=' ')
+                instruction = input()
+                argv = instruction.strip(' ').split(' ')
+                if len(argv) == 1:
+                    if argv[0] == 'q':
+                        sys.exit(0)
+                    elif argv[0] == 'r':
+                        plot_route(route.road, central_curves)
+                    elif argv[0] == 'r_map':
+                        plot_route(route.road, central_curves)
+                        util.draw_map(plt.gca(), base_map)
+                    else:
+                        print('[ERROR] wrong command')
+                    continue
 
-    plt.ion()
-    while 1:
-        print_help_command()
-        print('cmd>', end=' ')
-        instruction = raw_input()
-        argv = instruction.strip(' ').split(' ')
-        if len(argv) == 1:
-            if argv[0] == 'q':
-                sys.exit(0)
-            elif argv[0] == 'r':
-                plot_route(route, central_curves)
-            elif argv[0] == 'r_map':
-                plot_route(route, central_curves)
-                util.draw_map(plt.gca(), base_map)
-            else:
-                print('[ERROR] wrong command')
-            continue
-
-        else:
-            print('[ERROR] wrong arguments')
-            continue
+                else:
+                    print('[ERROR] wrong arguments')
+                    continue

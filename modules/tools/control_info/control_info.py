@@ -21,6 +21,8 @@ Control Planning Analyzer
 import argparse
 import math
 import sys
+sys.path.append("/apollo/")
+sys.path.append("/apollo/bazel-bin/")
 import threading
 import time
 import os
@@ -1321,5 +1323,5 @@ if __name__ == "__main__":
     controlinfo.plot_full_stop()
     book.close()
 
-    fig.canvas.mpl_connect('key_press_event', controlinfo.press)
-    plt.show()
+    # fig.canvas.mpl_connect('key_press_event', controlinfo.press)
+    # plt.show()
