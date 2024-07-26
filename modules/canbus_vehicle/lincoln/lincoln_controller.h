@@ -41,6 +41,9 @@
 #include "modules/canbus_vehicle/lincoln/protocol/throttle_62.h"
 #include "modules/canbus_vehicle/lincoln/protocol/turnsignal_68.h"
 
+//个人添加  阿克曼小车
+#include "modules/canbus_vehicle/lincoln/protocol/akeman_control_181.h"
+
 /**
  * @namespace apollo::canbus::lincoln
  * @brief apollo::canbus::lincoln
@@ -120,6 +123,12 @@ class LincolnController final
   // angle_spd:0.00~99.99, unit:deg/s
   void Steer(double angle, double angle_spd) override;
 
+  //zhxf 20240725 阿克曼小车控制信息
+  //target_vel_x：x轴目标速度 mm/s
+  //target_vel_y: y轴目标速度 mm/s
+  //target_vel_z: z轴目标速度 rad/s  left:+,  rught:-
+  void AkemanControlInfo(double target_vel_x, double target_vel_z) override;
+
   // set Electrical Park Brake
   void SetEpbBreak(const control::ControlCommand &command) override;
   common::ErrorCode HandleCustomOperation(
@@ -148,6 +157,9 @@ class LincolnController final
   Steering64 *steering_64_ = nullptr;
   Gear66 *gear_66_ = nullptr;
   Turnsignal68 *turnsignal_68_ = nullptr;
+
+  Akeman181 *akeman_control_181_ = nullptr;  //zhxf 20240725
+  
 
   Chassis chassis_;
   std::unique_ptr<std::thread> thread_;

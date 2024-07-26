@@ -94,6 +94,8 @@ class GemController final : public VehicleController<::apollo::canbus::Gem> {
   // angle:-99.99~0.00~99.99, unit:, left:+, right:-
   void Steer(double angle) override;
 
+  void AkemanControlInfo(double target_vel_x, double target_vel_z) override;  //zhxf 20270725 阿克曼小车
+
   // steering with new angle speed
   // angle:-99.99~0.00~99.99, unit:, left:+, right:-
   // angle_spd:0.00~99.99, unit:deg/s

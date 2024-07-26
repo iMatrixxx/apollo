@@ -94,6 +94,8 @@ class Ge3Controller final : public VehicleController<::apollo::canbus::Ge3> {
   // angle_spd:0.00~99.99, unit:deg/s
   void Steer(double angle, double angle_spd) override;
 
+  void AkemanControlInfo(double target_vel_x, double target_vel_z) override;  //zhxf 20270725 阿克曼小车
+
   // set Electrical Park Brake
   void SetEpbBreak(const control::ControlCommand& command) override;
   common::ErrorCode HandleCustomOperation(
@@ -134,6 +136,8 @@ class Ge3Controller final : public VehicleController<::apollo::canbus::Ge3> {
   std::mutex chassis_mask_mutex_;
   int32_t chassis_error_mask_ = 0;
 };
+
+
 
 }  // namespace ge3
 }  // namespace canbus

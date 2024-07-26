@@ -863,6 +863,8 @@ void WeyController::set_chassis_error_code(
   chassis_error_code_ = error_code;
 }
 
+void WeyController::AkemanControlInfo(double target_vel_x, double target_vel_z) {} //zhxf 20270725 阿克曼小车
+
 }  // namespace wey
 }  // namespace canbus
 }  // namespace apollo

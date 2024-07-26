@@ -26,11 +26,40 @@ namespace drivers {
 namespace canbus {
 namespace can {
 
+/*------------  初始化帧参数  -------------------*/
+auto ACC_CODE = 0x80000000;  // # 过滤验收码
+auto ACC_MASK = 0xFFFFFFFF;  // # 过滤屏蔽码
+auto FILTER = 1;             // # 滤波模式 0/1=接收所有类型
+auto TIMING_0 = 0x00;        // # 波特率 T0   0x00: 对应1000Kbps
+auto TIMING_1 = 0x14;        // # 波特率 T1   0x14: 对应1000Kbps
+auto MODE = 0;               // # 工作模式 0=正常工作
+
+/*-----------   发送帧参数  --------------------*/
+UINT TIME_STAMP = 10;  // 时间标识，仅在接收帧时有意义
+BYTE TIME_FLAG = 1;    // 是否使用时间标识,仅在接收帧时有意义
+BYTE TRANSMIT_SEND_TYPE =
+    1;  // 发送帧类型，0：正常发送，发送失败重发，4秒内未发送则取消；1：单次发送
+BYTE REMOTE_FLAG = 0;  // 是否是远程帧， 0：数据帧； 1：远程帧
+BYTE EXTERN_FLAG = 0;  // 是否是扩展帧，0：标准帧(11位ID) 1：扩展帧（29位ID）
+BYTE DATA_LEN = 8;  // 数据长度
+
 using apollo::common::ErrorCode;
 
 HermesCanClient::~HermesCanClient() {
   if (dev_handler_) {
     Stop();
+  }
+}
+
+void HermesCanClient::SetCANObjStdConfig(VCI_CAN_OBJ &obj) {
+  obj.TimeStamp = TIME_STAMP;
+  obj.TimeFlag = TIME_FLAG;
+  obj.SendType = TRANSMIT_SEND_TYPE;
+  obj.RemoteFlag = REMOTE_FLAG;
+  obj.ExternFlag = EXTERN_FLAG;
+  obj.DataLen = DATA_LEN;
+  for (int i = 0; i < 3; ++i) {
+    obj.Reserved[i] = 0;
   }
 }
 
@@ -58,31 +87,40 @@ ErrorCode HermesCanClient::Start() {
   }
 
   // open device
-  int32_t ret = bcan_open(port_, 0,
-                          5,  // 5ms for rx timeout
-                          5,  // 5ms for tx timeout
-                          &dev_handler_);
-
-  if (ret != ErrorCode::OK) {
-    AERROR << "Open device error code: " << ret << ", channel id: " << port_;
+  if (VCI_OpenDevice(VCI_USBCAN2, 0, 0) != 1) {
+    AERROR << "Open device error";
+    printf("打开设备失败\n");
     return ErrorCode::CAN_CLIENT_ERROR_BASE;
   }
-  AINFO << "Open device success, channel id: " << port_;
-
-  // 1. set baudrate to 500k
-  ret = bcan_set_baudrate(dev_handler_, BCAN_BAUDRATE_500K);
-  if (ret != ErrorCode::OK) {
-    AERROR << "Set baudrate error Code: " << ret;
+  printf("打开设备1成功\n");
+  AWARN << "Open device success, channel id: " << port_;
+  // init
+  VCI_INIT_CONFIG init_config;
+  init_config.AccCode = ACC_CODE;
+  init_config.AccMask = ACC_MASK;
+  init_config.Filter = FILTER;
+  init_config.Timing0 = TIMING_0;
+  init_config.Timing1 = TIMING_1;
+  init_config.Mode = MODE;
+  if (VCI_InitCAN(VCI_USBCAN2, 0, 0, &init_config) != 1) {
+    AERROR << ">> Init CAN1 Error!";
+     printf("初始化CAN1失败\n");
+    VCI_CloseDevice(0, 0);
     return ErrorCode::CAN_CLIENT_ERROR_BASE;
   }
+  printf("初始化CAN1成功\n");
+  AWARN << ">> Init CAN1 Success!";
 
   // 2. start receive
-  ret = bcan_start(dev_handler_);
-  if (ret != ErrorCode::OK) {
-    AERROR << "Start hermes can card failed: " << ret;
+  if (VCI_StartCAN(VCI_USBCAN2, 0, 0) != 1) {
+    AERROR << ">> Start CAN1 error!";
+     printf("开启CAN1失败\n");
+    VCI_CloseDevice(0, 0);
     return ErrorCode::CAN_CLIENT_ERROR_BASE;
   }
-
+  printf("开启CAN1成功\n");
+  AWARN << ">> Start CAN1 Success!";
+  
   is_init_ = true;
   return ErrorCode::OK;
 }
@@ -90,8 +128,12 @@ ErrorCode HermesCanClient::Start() {
 void HermesCanClient::Stop() {
   if (is_init_) {
     is_init_ = false;
-    int32_t ret = bcan_close(dev_handler_);
-    if (ret != ErrorCode::OK) {
+    //int32_t ret = bcan_close(dev_handler_);  //apollo source code
+    // if (ret != ErrorCode::OK) {
+    //   AERROR << "close error code: " << ret;
+    // }
+    int32_t ret = VCI_CloseDevice(VCI_USBCAN2, VCI_DEVICE_ID_0);
+    if (ret != 1) {
       AERROR << "close error code: " << ret;
     }
   }
@@ -116,24 +158,34 @@ apollo::common::ErrorCode HermesCanClient::Send(
     AERROR << "Hermes can client is not init! Please init first!";
     return ErrorCode::CAN_CLIENT_ERROR_SEND_FAILED;
   }
-  //    if (*frame_num > MAX_CAN_SEND_FRAME_LEN || *frame_num < 0) {
-  //       AERROR << "send can frame num not in range[0, "
-  //         << MAX_CAN_SEND_FRAME_LEN << "], frame_num:" << *frame_num;
-  //       return ErrorCode::CAN_CLIENT_ERROR_FRAME_NUM;
-  //    }
+  if (*frame_num > MAX_CAN_SEND_FRAME_LEN || *frame_num < 0) {
+    AERROR << "send can frame num not in range[0, "
+      << MAX_CAN_SEND_FRAME_LEN << "], frame_num:" << *frame_num;
+    return ErrorCode::CAN_CLIENT_ERROR_FRAME_NUM;
+  }
   for (int i = 0; i < *frame_num; ++i) {
+    /*  apollo source code
     _send_frames[i].bcan_msg_id = frames[i].id;
     _send_frames[i].bcan_msg_datalen = frames[i].len;
-    memcpy(_send_frames[i].bcan_msg_data, frames[i].data, frames[i].len);
+    memcpy(_send_frames[i].bcan_msg_data, frames[i].data, frames[i].len);  
+    */
+
+    //------------- zhxf 20240725 -----------------------------------
+    SetCANObjStdConfig(_send_frames[i]);
+    _send_frames[i].ID = frames[i].id;
+    _send_frames[i].DataLen = frames[i].len;
+    memcpy(_send_frames[i].Data, frames[i].data, frames[i].len);
+    //-----------------------------------------------------------------
   }
 
   // Synchronous transmission of CAN messages
   int32_t send_num = *frame_num;
-  int32_t ret = bcan_send(dev_handler_, _send_frames, send_num);
+  //int32_t ret = bcan_send(dev_handler_, _send_frames, send_num); //apollo source code
+  int32_t ret = VCI_Transmit(VCI_USBCAN2, VCI_DEVICE_ID_0, VCI_CAN_CHANNEL_0,_send_frames, send_num);
   if (ret < 0) {
-    int ret_send_error = bcan_get_status(dev_handler_);
-    AERROR << "send message failed, error code: " << ret
-           << ", send error: " << ret_send_error;
+    //int ret_send_error = bcan_get_status(dev_handler_);  //apollo source code
+    AERROR << "send message failed, error code: " << ret;
+          // << ", send error: " << ret_send_error;
     return ErrorCode::CAN_CLIENT_ERROR_SEND_FAILED;
   }
   *frame_num = ret;
@@ -155,16 +207,20 @@ apollo::common::ErrorCode HermesCanClient::Receive(
     return ErrorCode::CAN_CLIENT_ERROR_FRAME_NUM;
   }
 
-  int32_t ret = bcan_recv(dev_handler_, _recv_frames, *frame_num);
+  //int32_t ret = bcan_recv(dev_handler_, _recv_frames, *frame_num);   //apollo source code
+  int32_t ret = VCI_Receive(VCI_USBCAN2, VCI_DEVICE_ID_0, VCI_CAN_CHANNEL_0, _recv_frames, *frame_num, 1000);
+
   // don't log timeout
   if (ret == RX_TIMEOUT) {
     *frame_num = 0;
     return ErrorCode::OK;
   }
+
   if (ret < 0) {
-    int ret_rece_error = bcan_get_status(dev_handler_);
-    AERROR << "receive message failed, error code:" << ret
-           << "receive error:" << ret_rece_error;
+    //int ret_rece_error = bcan_get_status(dev_handler_); //apollo source code
+    //AERROR << "receive message failed, error code:" << ret
+          // << "receive error:" << ret_rece_error;
+    AERROR << "Can receive message failed, received number of data:"<< ret;
     return ErrorCode::CAN_CLIENT_ERROR_RECV_FAILED;
   }
   *frame_num = ret;
@@ -172,11 +228,16 @@ apollo::common::ErrorCode HermesCanClient::Receive(
   // is ret num is equal *frame_num?
   for (int i = 0; i < *frame_num; ++i) {
     CanFrame cf;
-    cf.id = _recv_frames[i].bcan_msg_id;
-    cf.len = _recv_frames[i].bcan_msg_datalen;
-    cf.timestamp.tv_sec = _recv_frames[i].bcan_msg_timestamp.tv_sec;
-    cf.timestamp.tv_usec = _recv_frames[i].bcan_msg_timestamp.tv_usec;
-    memcpy(cf.data, _recv_frames[i].bcan_msg_data, cf.len);
+    // cf.id = _recv_frames[i].bcan_msg_id;
+    // cf.len = _recv_frames[i].bcan_msg_datalen;
+    // cf.timestamp.tv_sec = _recv_frames[i].bcan_msg_timestamp.tv_sec;
+    // cf.timestamp.tv_usec = _recv_frames[i].bcan_msg_timestamp.tv_usec;
+    // memcpy(cf.data, _recv_frames[i].bcan_msg_data, cf.len);  
+    cf.id = _recv_frames[i].ID;
+    cf.len = _recv_frames[i].DataLen;
+    cf.timestamp.tv_sec = _recv_frames[i].TimeStamp*10*1000;
+    cf.timestamp.tv_usec = _recv_frames[i].TimeStamp/100.0;
+    memcpy(cf.data, _recv_frames[i].Data, cf.len); 
     frames->push_back(cf);
   }
 

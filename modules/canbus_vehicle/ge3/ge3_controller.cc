@@ -876,6 +876,8 @@ bool Ge3Controller::CheckSafetyError(
   return false;
 }
 
+void Ge3Controller::AkemanControlInfo(double target_vel_x, double target_vel_z) {}  //zhxf 20270725 阿克曼小车
+
 }  // namespace ge3
 }  // namespace canbus
 }  // namespace apollo

@@ -654,6 +654,8 @@ void TransitController::SetLimits() {
   adc_motioncontrollimits1_12_->set_adc_cmd_steeringrate(500);
 }
 
+void TransitController::AkemanControlInfo(double target_vel_x, double target_vel_z) {} //zhxf 20270725 阿克曼小车
+
 }  // namespace transit
 }  // namespace canbus
 }  // namespace apollo

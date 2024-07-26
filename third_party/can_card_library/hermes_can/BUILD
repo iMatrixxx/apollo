@@ -12,9 +12,11 @@ cc_library(
         {
             "@platforms//cpu:x86_64": glob([
                 "lib_x86_64/libbcan.so",
+                "lib_x86_64/libcontrolcan.so",
             ]),
             "@platforms//cpu:aarch64": glob([
                 "lib_aarch64/libbcan.so",
+                "lib_aarch64/libcontrolcan.so",
             ]),
         },
         no_match_error = "Please Build with a Linux aarch64 or x86_64 platform",

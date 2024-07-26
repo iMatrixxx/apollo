@@ -724,6 +724,8 @@ void ZhongyunController::set_chassis_error_code(
   chassis_error_code_ = error_code;
 }
 
+void ZhongyunController::AkemanControlInfo(double target_vel_x, double target_vel_z) {} //zhxf 20270725 阿克曼小车
+
 }  // namespace zhongyun
 }  // namespace canbus
 }  // namespace apollo

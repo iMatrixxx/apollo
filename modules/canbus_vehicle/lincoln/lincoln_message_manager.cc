@@ -40,6 +40,9 @@
 #include "modules/canbus_vehicle/lincoln/protocol/version_7f.h"
 #include "modules/canbus_vehicle/lincoln/protocol/wheelspeed_6a.h"
 
+#include "modules/canbus_vehicle/lincoln/protocol/akeman_control_181.h" //zhxf 20240725 阿克曼小车
+#include "modules/canbus_vehicle/lincoln/protocol/akeman_info_101.h"
+
 namespace apollo {
 namespace canbus {
 namespace lincoln {
@@ -51,6 +54,10 @@ LincolnMessageManager::LincolnMessageManager() {
   AddSendProtocolData<Steering64, true>();
   AddSendProtocolData<Gear66, true>();
   AddSendProtocolData<Turnsignal68, true>();
+
+  //zhxf 20240725  阿克曼小车
+  AddSendProtocolData<Akeman181, true>();
+  AddRecvProtocolData<AkemanInfo101, true>();
 
   AddRecvProtocolData<Brake61, true>();
   AddRecvProtocolData<Throttle63, true>();

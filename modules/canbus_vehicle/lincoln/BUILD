@@ -34,6 +34,8 @@ apollo_cc_library(
         "protocol/turnsignal_68.cc",
         "protocol/version_7f.cc",
         "protocol/wheelspeed_6a.cc",
+        "protocol/akeman_control_181.cpp",
+        "protocol/akeman_info_101.cpp"
     ],
     hdrs = [
         "lincoln_controller.h",
@@ -62,6 +64,9 @@ apollo_cc_library(
         "protocol/turnsignal_68.h",
         "protocol/version_7f.h",
         "protocol/wheelspeed_6a.h",
+        "protocol/akeman_info_101.h",
+        "protocol/akeman_control_181.h"
+
     ],
     copts = CANBUS_COPTS,
     deps = [

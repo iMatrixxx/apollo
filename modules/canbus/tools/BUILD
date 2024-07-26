@@ -3,6 +3,7 @@ load("//tools:apollo_package.bzl", "apollo_package", "apollo_cc_binary")
 
 package(default_visibility = ["//visibility:public"])
 
+
 apollo_cc_binary(
     name = "canbus_tester",
     srcs = ["canbus_tester.cc"],
@@ -14,6 +15,7 @@ apollo_cc_binary(
         "@com_github_gflags_gflags//:gflags",
     ],
 )
+
 
 apollo_cc_binary(
     name = "teleop",

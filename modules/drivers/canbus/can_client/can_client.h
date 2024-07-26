@@ -32,6 +32,7 @@
 
 #include "cyber/common/log.h"
 #include "modules/drivers/canbus/common/byte.h"
+#include "modules/drivers/canbus/can_client/hermes_can/controlcan.h"
 
 /**
  * @namespace apollo::drivers::canbus

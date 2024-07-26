@@ -27,34 +27,49 @@ namespace lincoln {
 
 using ::apollo::drivers::canbus::Byte;
 
-const int32_t Accel6b::ID = 0x6B;
+// const int32_t Accel6b::ID = 0x6B; //apollo source
+const int32_t Accel6b::ID = 0x102; //zhxf 20240725 阿克曼小车
 
 void Accel6b::Parse(const std::uint8_t *bytes, int32_t length,
                     Lincoln *chassis_detail) const {
-  chassis_detail->mutable_vehicle_spd()->set_lat_acc(
-      lateral_acceleration(bytes, length));
-  chassis_detail->mutable_vehicle_spd()->set_long_acc(
-      longitudinal_acceleration(bytes, length));
-  chassis_detail->mutable_vehicle_spd()->set_vert_acc(
-      vertical_acceleration(bytes, length));
+  double acc_y = lateral_acceleration(bytes, length);
+  double acc_x = longitudinal_acceleration(bytes, length);
+  double acc_z = vertical_acceleration(bytes, length);
+
+  chassis_detail->mutable_vehicle_spd()->set_lat_acc(acc_y);
+  chassis_detail->mutable_vehicle_spd()->set_long_acc(acc_x);
+  chassis_detail->mutable_vehicle_spd()->set_vert_acc(acc_z);
+
+  AWARN << "Acc_X "<<acc_x;
+  AWARN << "Acc_Y "<<acc_y;
+  AWARN << "Acc_Z "<<acc_z;
+
 }
 
 double Accel6b::lateral_acceleration(const std::uint8_t *bytes,
                                      const int32_t length) const {
-  DCHECK_GE(length, 2);
-  return parse_two_frames(bytes[0], bytes[1]);
+  //DCHECK_GE(length, 2);
+  //return parse_two_frames(bytes[0], bytes[1]); //apollo source code
+
+  DCHECK_GE(length, 4);  //zhxf 20240725 阿克曼小车
+  return parse_two_frames(bytes[3], bytes[2]); 
+ 
 }
 
 double Accel6b::longitudinal_acceleration(const std::uint8_t *bytes,
                                           const int32_t length) const {
-  DCHECK_GE(length, 4);
-  return parse_two_frames(bytes[2], bytes[3]);
+  // DCHECK_GE(length, 4);
+  // return parse_two_frames(bytes[2], bytes[3]); //apollo source code
+
+  DCHECK_GE(length, 2);
+  return parse_two_frames(bytes[1], bytes[10]);
 }
 
 double Accel6b::vertical_acceleration(const std::uint8_t *bytes,
                                       const int32_t length) const {
   DCHECK_GE(length, 6);
-  return parse_two_frames(bytes[4], bytes[5]);
+  //return parse_two_frames(bytes[4], bytes[5]); //apollo source code
+  return parse_two_frames(bytes[5], bytes[4]);
 }
 
 double Accel6b::parse_two_frames(const std::uint8_t low_byte,
@@ -67,7 +82,8 @@ double Accel6b::parse_two_frames(const std::uint8_t low_byte,
   if (value > 0x7FFF) {
     value -= 0x10000;
   }
-  return value * 0.010000;
+  //return value * 0.010000;   //apollo source code
+  return value / 1672.0; //zhxf 20240725 阿克曼小车
 }
 
 }  // namespace lincoln

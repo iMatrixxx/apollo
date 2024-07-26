@@ -710,6 +710,8 @@ void LexusController::set_chassis_error_code(
   chassis_error_code_ = error_code;
 }
 
+void LexusController::AkemanControlInfo(double target_vel_x, double target_vel_z) {} //zhxf 20270725 阿克曼小车
+
 }  // namespace lexus
 }  // namespace canbus
 }  // namespace apollo

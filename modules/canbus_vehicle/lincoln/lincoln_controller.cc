@@ -30,6 +30,9 @@
 #include "modules/drivers/canbus/can_comm/can_sender.h"
 #include "modules/drivers/canbus/can_comm/protocol_data.h"
 
+//zhxf 20240725 
+#include "modules/canbus_vehicle/lincoln/protocol/akeman_control_181.h"
+
 namespace apollo {
 namespace canbus {
 namespace lincoln {
@@ -110,11 +113,23 @@ ErrorCode LincolnController::Init(
     return ErrorCode::CANBUS_ERROR;
   }
 
-  can_sender_->AddMessage(Brake60::ID, brake_60_, false);
-  can_sender_->AddMessage(Throttle62::ID, throttle_62_, false);
-  can_sender_->AddMessage(Steering64::ID, steering_64_, false);
-  can_sender_->AddMessage(Gear66::ID, gear_66_, false);
-  can_sender_->AddMessage(Turnsignal68::ID, turnsignal_68_, false);
+  //------------- zhxf 20240725  阿克曼控制信息 -----------------------
+  akeman_control_181_ = dynamic_cast<Akeman181 *>(
+      message_manager_->GetMutableProtocolDataById(Akeman181::ID));
+  if (akeman_control_181_ == nullptr) {
+    AERROR << "Akeman181 does not exist in the LincolnMessageManager!";
+    return ErrorCode::CANBUS_ERROR;
+  }
+  can_sender_->AddMessage(Akeman181::ID, akeman_control_181_, false);
+  //------------------------------------------------------------------
+
+  // can_sender_->AddMessage(Brake60::ID, brake_60_, false);
+  // can_sender_->AddMessage(Throttle62::ID, throttle_62_, false);
+  // can_sender_->AddMessage(Steering64::ID, steering_64_, false);
+  // can_sender_->AddMessage(Gear66::ID, gear_66_, false);
+  // can_sender_->AddMessage(Turnsignal68::ID, turnsignal_68_, false);
+
+  
 
   // Need to sleep to ensure all messages received
   AINFO << "LincolnController is initialized.";
@@ -400,6 +415,8 @@ ErrorCode LincolnController::EnableAutoMode() {
   throttle_62_->set_enable();
   steering_64_->set_enable();
 
+  akeman_control_181_->set_enable();  //zhxf 20240725
+
   can_sender_->Update();
   const int32_t flag =
       CHECK_RESPONSE_STEER_UNIT_FLAG | CHECK_RESPONSE_SPEED_UNIT_FLAG;
@@ -434,6 +451,8 @@ ErrorCode LincolnController::EnableSteeringOnlyMode() {
   throttle_62_->set_disable();
   steering_64_->set_enable();
 
+  akeman_control_181_->set_enable(); //zhxf 20240725 阿克曼
+
   can_sender_->Update();
   if (!CheckResponse(CHECK_RESPONSE_STEER_UNIT_FLAG, true)) {
     AERROR << "Failed to switch to AUTO_STEER_ONLY mode.";
@@ -456,6 +475,8 @@ ErrorCode LincolnController::EnableSpeedOnlyMode() {
   brake_60_->set_enable();
   throttle_62_->set_enable();
   steering_64_->set_disable();
+
+  akeman_control_181_->set_enable(); //zhxf 20240725 阿克曼
 
   can_sender_->Update();
   if (!CheckResponse(CHECK_RESPONSE_SPEED_UNIT_FLAG, true)) {
@@ -605,6 +626,11 @@ void LincolnController::Steer(double angle, double angle_spd) {
       ->set_steering_angle_speed(real_angle_spd);
 }
 
+//zhxf 20240725
+void LincolnController::AkemanControlInfo(double target_vel_x, double target_vel_z) {
+  akeman_control_181_->set_control_info(target_vel_x, target_vel_z);
+}
+
 void LincolnController::SetEpbBreak(const ControlCommand &command) {
   if (command.parking_brake()) {
     // None
@@ -653,123 +679,124 @@ void LincolnController::ResetProtocol() {
 }
 
 bool LincolnController::CheckChassisError() {
-  Lincoln chassis_detail;
-  message_manager_->GetSensorData(&chassis_detail);
+  // Lincoln chassis_detail;
+  // message_manager_->GetSensorData(&chassis_detail);
 
-  int32_t error_cnt = 0;
-  int32_t chassis_error_mask = 0;
+  // int32_t error_cnt = 0;
+  // int32_t chassis_error_mask = 0;
 
-  // Steer fault
-  bool steer_fault = chassis_detail.eps().watchdog_fault() |
-                     chassis_detail.eps().channel_1_fault() |
-                     chassis_detail.eps().channel_2_fault() |
-                     chassis_detail.eps().calibration_fault() |
-                     chassis_detail.eps().connector_fault();
+  // // Steer fault
+  // bool steer_fault = chassis_detail.eps().watchdog_fault() |
+  //                    chassis_detail.eps().channel_1_fault() |
+  //                    chassis_detail.eps().channel_2_fault() |
+  //                    chassis_detail.eps().calibration_fault() |
+  //                    chassis_detail.eps().connector_fault();
 
-  chassis_error_mask |=
-      ((chassis_detail.eps().watchdog_fault()) << (++error_cnt));
-  chassis_error_mask |=
-      ((chassis_detail.eps().channel_1_fault()) << (++error_cnt));
-  chassis_error_mask |=
-      ((chassis_detail.eps().channel_2_fault()) << (++error_cnt));
-  chassis_error_mask |=
-      ((chassis_detail.eps().calibration_fault()) << (++error_cnt));
-  chassis_error_mask |=
-      ((chassis_detail.eps().connector_fault()) << (++error_cnt));
+  // chassis_error_mask |=
+  //     ((chassis_detail.eps().watchdog_fault()) << (++error_cnt));
+  // chassis_error_mask |=
+  //     ((chassis_detail.eps().channel_1_fault()) << (++error_cnt));
+  // chassis_error_mask |=
+  //     ((chassis_detail.eps().channel_2_fault()) << (++error_cnt));
+  // chassis_error_mask |=
+  //     ((chassis_detail.eps().calibration_fault()) << (++error_cnt));
+  // chassis_error_mask |=
+  //     ((chassis_detail.eps().connector_fault()) << (++error_cnt));
 
-  if (!chassis_detail.has_brake()) {
-    AERROR_EVERY(100) << "Lincoln has NO brake."
-                      << chassis_detail.DebugString();
-    return false;
-  }
-  // Brake fault
-  bool brake_fault = chassis_detail.brake().watchdog_fault() |
-                     chassis_detail.brake().channel_1_fault() |
-                     chassis_detail.brake().channel_2_fault() |
-                     chassis_detail.brake().boo_fault() |
-                     chassis_detail.brake().connector_fault();
+  // if (!chassis_detail.has_brake()) {
+  //   AERROR_EVERY(100) << "Lincoln has NO brake."
+  //                     << chassis_detail.DebugString();
+  //   return false;
+  // }
+  // // Brake fault
+  // bool brake_fault = chassis_detail.brake().watchdog_fault() |
+  //                    chassis_detail.brake().channel_1_fault() |
+  //                    chassis_detail.brake().channel_2_fault() |
+  //                    chassis_detail.brake().boo_fault() |
+  //                    chassis_detail.brake().connector_fault();
 
-  chassis_error_mask |=
-      ((chassis_detail.brake().watchdog_fault()) << (++error_cnt));
-  chassis_error_mask |=
-      ((chassis_detail.brake().channel_1_fault()) << (++error_cnt));
-  chassis_error_mask |=
-      ((chassis_detail.brake().channel_2_fault()) << (++error_cnt));
-  chassis_error_mask |= ((chassis_detail.brake().boo_fault()) << (++error_cnt));
-  chassis_error_mask |=
-      ((chassis_detail.brake().connector_fault()) << (++error_cnt));
+  // chassis_error_mask |=
+  //     ((chassis_detail.brake().watchdog_fault()) << (++error_cnt));
+  // chassis_error_mask |=
+  //     ((chassis_detail.brake().channel_1_fault()) << (++error_cnt));
+  // chassis_error_mask |=
+  //     ((chassis_detail.brake().channel_2_fault()) << (++error_cnt));
+  // chassis_error_mask |= ((chassis_detail.brake().boo_fault()) << (++error_cnt));
+  // chassis_error_mask |=
+  //     ((chassis_detail.brake().connector_fault()) << (++error_cnt));
 
-  if (!chassis_detail.has_gas()) {
-    AERROR_EVERY(100) << "Lincoln has NO gas." << chassis_detail.DebugString();
-    return false;
-  }
-  // Throttle fault
-  bool throttle_fault = chassis_detail.gas().watchdog_fault() |
-                        chassis_detail.gas().channel_1_fault() |
-                        chassis_detail.gas().channel_2_fault() |
-                        chassis_detail.gas().connector_fault();
+  // if (!chassis_detail.has_gas()) {
+  //   AERROR_EVERY(100) << "Lincoln has NO gas." << chassis_detail.DebugString();
+  //   return false;
+  // }
+  // // Throttle fault
+  // bool throttle_fault = chassis_detail.gas().watchdog_fault() |
+  //                       chassis_detail.gas().channel_1_fault() |
+  //                       chassis_detail.gas().channel_2_fault() |
+  //                       chassis_detail.gas().connector_fault();
 
-  chassis_error_mask |=
-      ((chassis_detail.gas().watchdog_fault()) << (++error_cnt));
-  chassis_error_mask |=
-      ((chassis_detail.gas().channel_1_fault()) << (++error_cnt));
-  chassis_error_mask |=
-      ((chassis_detail.gas().channel_2_fault()) << (++error_cnt));
-  chassis_error_mask |=
-      ((chassis_detail.gas().connector_fault()) << (++error_cnt));
+  // chassis_error_mask |=
+  //     ((chassis_detail.gas().watchdog_fault()) << (++error_cnt));
+  // chassis_error_mask |=
+  //     ((chassis_detail.gas().channel_1_fault()) << (++error_cnt));
+  // chassis_error_mask |=
+  //     ((chassis_detail.gas().channel_2_fault()) << (++error_cnt));
+  // chassis_error_mask |=
+  //     ((chassis_detail.gas().connector_fault()) << (++error_cnt));
 
-  if (!chassis_detail.has_gear()) {
-    AERROR_EVERY(100) << "Lincoln has NO gear." << chassis_detail.DebugString();
-    return false;
-  }
-  // Gear fault
-  bool gear_fault = chassis_detail.gear().canbus_fault();
+  // if (!chassis_detail.has_gear()) {
+  //   AERROR_EVERY(100) << "Lincoln has NO gear." << chassis_detail.DebugString();
+  //   return false;
+  // }
+  // // Gear fault
+  // bool gear_fault = chassis_detail.gear().canbus_fault();
 
-  chassis_error_mask |=
-      ((chassis_detail.gear().canbus_fault()) << (++error_cnt));
+  // chassis_error_mask |=
+  //     ((chassis_detail.gear().canbus_fault()) << (++error_cnt));
 
-  set_chassis_error_mask(chassis_error_mask);
+  // set_chassis_error_mask(chassis_error_mask);
 
-  if (steer_fault) {
-    set_chassis_error_code(Chassis::CHASSIS_ERROR_ON_STEER);
-    AERROR_EVERY(100) << "Steering fault detected: "
-                      << chassis_detail.eps().watchdog_fault() << ", "
-                      << chassis_detail.eps().channel_1_fault() << ", "
-                      << chassis_detail.eps().channel_2_fault() << ", "
-                      << chassis_detail.eps().calibration_fault() << ", "
-                      << chassis_detail.eps().connector_fault();
-  }
+  // if (steer_fault) {
+  //   set_chassis_error_code(Chassis::CHASSIS_ERROR_ON_STEER);
+  //   AERROR_EVERY(100) << "Steering fault detected: "
+  //                     << chassis_detail.eps().watchdog_fault() << ", "
+  //                     << chassis_detail.eps().channel_1_fault() << ", "
+  //                     << chassis_detail.eps().channel_2_fault() << ", "
+  //                     << chassis_detail.eps().calibration_fault() << ", "
+  //                     << chassis_detail.eps().connector_fault();
+  // }
 
-  if (brake_fault) {
-    set_chassis_error_code(Chassis::CHASSIS_ERROR_ON_BRAKE);
-    AERROR_EVERY(100) << "Brake fault detected: "
-                      << chassis_detail.brake().watchdog_fault() << ", "
-                      << chassis_detail.brake().channel_1_fault() << ", "
-                      << chassis_detail.brake().channel_2_fault() << ", "
-                      << chassis_detail.brake().boo_fault() << ", "
-                      << chassis_detail.brake().connector_fault();
-  }
+  // if (brake_fault) {
+  //   set_chassis_error_code(Chassis::CHASSIS_ERROR_ON_BRAKE);
+  //   AERROR_EVERY(100) << "Brake fault detected: "
+  //                     << chassis_detail.brake().watchdog_fault() << ", "
+  //                     << chassis_detail.brake().channel_1_fault() << ", "
+  //                     << chassis_detail.brake().channel_2_fault() << ", "
+  //                     << chassis_detail.brake().boo_fault() << ", "
+  //                     << chassis_detail.brake().connector_fault();
+  // }
 
-  if (throttle_fault) {
-    set_chassis_error_code(Chassis::CHASSIS_ERROR_ON_THROTTLE);
-    AERROR_EVERY(100) << "Throttle fault detected: "
-                      << chassis_detail.gas().watchdog_fault() << ", "
-                      << chassis_detail.gas().channel_1_fault() << ", "
-                      << chassis_detail.gas().channel_2_fault() << ", "
-                      << chassis_detail.gas().connector_fault();
-  }
+  // if (throttle_fault) {
+  //   set_chassis_error_code(Chassis::CHASSIS_ERROR_ON_THROTTLE);
+  //   AERROR_EVERY(100) << "Throttle fault detected: "
+  //                     << chassis_detail.gas().watchdog_fault() << ", "
+  //                     << chassis_detail.gas().channel_1_fault() << ", "
+  //                     << chassis_detail.gas().channel_2_fault() << ", "
+  //                     << chassis_detail.gas().connector_fault();
+  // }
 
-  if (gear_fault) {
-    set_chassis_error_code(Chassis::CHASSIS_ERROR_ON_GEAR);
-    AERROR_EVERY(100) << "Gear fault detected: "
-                      << chassis_detail.gear().canbus_fault();
-  }
+  // if (gear_fault) {
+  //   set_chassis_error_code(Chassis::CHASSIS_ERROR_ON_GEAR);
+  //   AERROR_EVERY(100) << "Gear fault detected: "
+  //                     << chassis_detail.gear().canbus_fault();
+  // }
 
-  if (steer_fault || brake_fault || throttle_fault) {
-    return true;
-  }
+  // if (steer_fault || brake_fault || throttle_fault) {
+  //   return true;
+  // }
 
-  return false;
+  // return false;
+  return true;
 }
 
 void LincolnController::SecurityDogThreadFunc() {

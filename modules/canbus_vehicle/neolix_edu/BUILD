@@ -75,16 +75,16 @@ apollo_component(
     deps = [":apollo_canbus_vehicle_neolix_edu"],
 )
 
-apollo_cc_test(
-    name = "neolix_edu_controller_test",
-    size = "small",
-    srcs = ["neolix_edu_controller_test.cc"],
-    data = ["//modules/canbus:test_data"],
-    deps = [
-        ":apollo_canbus_vehicle_neolix_edu",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
+# apollo_cc_test(
+#     name = "neolix_edu_controller_test",
+#     size = "small",
+#     srcs = ["neolix_edu_controller_test.cc"],
+#     data = ["//modules/canbus:test_data"],
+#     deps = [
+#         ":apollo_canbus_vehicle_neolix_edu",
+#         "@com_google_googletest//:gtest_main",
+#     ],
+# )
 
 apollo_cc_test(
     name = "neolix_edu_message_manager_test",

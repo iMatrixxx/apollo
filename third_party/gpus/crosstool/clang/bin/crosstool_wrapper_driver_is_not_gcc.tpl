@@ -221,14 +221,15 @@ def InvokeNvcc(argv, log=False):
   if VERBOSE or NVCC_VERBOSE:
     nvccopts += '-v '
 
-  for capability in GetOptionValue(argv, "--cuda-gpu-arch"):
-    capability = capability[len('sm_'):]
-    nvccopts += r'-gencode=arch=compute_%s,\"code=sm_%s\" ' % (capability,
-                                                               capability)
-  for capability in GetOptionValue(argv, '--cuda-include-ptx'):
-    capability = capability[len('sm_'):]
-    nvccopts += r'-gencode=arch=compute_%s,\"code=compute_%s\" ' % (capability,
-                                                                    capability)
+  # for capability in GetOptionValue(argv, "--cuda-gpu-arch"):
+  #   capability = capability[len('sm_'):]
+  #   nvccopts += r'-gencode=arch=compute_%s,\"code=sm_%s\" ' % (capability,
+  #                                                              capability)
+  # for capability in GetOptionValue(argv, '--cuda-include-ptx'):
+  #   capability = capability[len('sm_'):]
+  #   nvccopts += r'-gencode=arch=compute_%s,\"code=compute_%s\" ' % (capability,
+  #                                                                   capability)
+  nvccopts +='-gencode=arch=compute_86,\"code=compute_86\" '
   nvccopts += nvcc_compiler_options
   nvccopts += undefines
   nvccopts += defines

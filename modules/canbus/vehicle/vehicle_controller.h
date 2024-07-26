@@ -144,6 +144,9 @@ class VehicleController {
    */
   virtual void Steer(double angle, double angle_spd) = 0;
 
+  //zhxf 20240725   阿克曼小车控制信息
+  virtual void AkemanControlInfo(double target_vel_x, double target_vel_z) = 0;
+
   /*
    * @brief set Electrical Park Brake
    */
@@ -343,6 +346,9 @@ ErrorCode VehicleController<SensorType>::Update(
     HandleVehicleSignal(
         ProcessCommandChange(control_command.signal(), &last_control_command_));
   }
+
+  //zhxf 20240725 阿克曼小车控制信息
+  AkemanControlInfo(control_command.throttle(), control_command.steering_rate());
 
   return ErrorCode::OK;
 }

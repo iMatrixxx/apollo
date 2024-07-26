@@ -751,6 +751,8 @@ void ChController::set_chassis_error_code(
   chassis_error_code_ = error_code;
 }
 
+void ChController::AkemanControlInfo(double target_vel_x, double target_vel_z){}
+
 }  // namespace ch
 }  // namespace canbus
 }  // namespace apollo
