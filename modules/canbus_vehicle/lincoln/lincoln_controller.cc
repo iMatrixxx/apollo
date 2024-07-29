@@ -129,8 +129,6 @@ ErrorCode LincolnController::Init(
   // can_sender_->AddMessage(Gear66::ID, gear_66_, false);
   // can_sender_->AddMessage(Turnsignal68::ID, turnsignal_68_, false);
 
-  
-
   // Need to sleep to ensure all messages received
   AINFO << "LincolnController is initialized.";
 

@@ -35,10 +35,10 @@
 #include "modules/common/util/message_util.h"
 
 // gflags
-DEFINE_double(throttle_inc_delta, 2.0,
+DEFINE_double(throttle_inc_delta, 0.01,
               "throttle pedal command delta percentage.");
-DEFINE_double(brake_inc_delta, 2.0, "brake pedal delta percentage");
-DEFINE_double(steer_inc_delta, 2.0, "steer delta percentage");
+DEFINE_double(brake_inc_delta, 0.01, "brake pedal delta percentage");
+DEFINE_double(steer_inc_delta, 0.1, "steer delta percentage");
 // TODO(ALL) : switch the acceleration cmd or pedal cmd
 // default : use pedal cmd
 DEFINE_bool(
@@ -145,6 +145,7 @@ class Teleop {
     double acc = 0;
     double dec = 0;
     double steering = 0;
+    double steering_rate = 0;
     struct termios cooked_;
     struct termios raw_;
     int32_t kfd_ = 0;
@@ -194,6 +195,7 @@ class Teleop {
             }
           } else {
             throttle = GetCommand(throttle, FLAGS_throttle_inc_delta);
+            printf("throttle = %f\n", throttle);
             if (!FLAGS_use_acceleration) {
               control_command_.set_throttle(throttle);
             } else {
@@ -214,23 +216,24 @@ class Teleop {
             brake = control_command_.brake();
             throttle = control_command_.throttle();
           }
-          if (throttle > 1e-6) {
+          // if (throttle > 1e-6) {
             throttle = GetCommand(throttle, -FLAGS_throttle_inc_delta);
+            printf("throttle = %f\n", throttle);
             if (!FLAGS_use_acceleration) {
               control_command_.set_throttle(throttle);
             } else {
               acc = throttle / 100 * vehicle_params_.max_acceleration();
               control_command_.set_acceleration(acc);
             }
-          } else {
-            brake = GetCommand(brake, FLAGS_brake_inc_delta);
-            if (!FLAGS_use_acceleration) {
-              control_command_.set_brake(brake);
-            } else {
-              dec = brake / 100 * vehicle_params_.max_deceleration();
-              control_command_.set_acceleration(dec);
-            }
-          }
+          // } else {
+          //   brake = GetCommand(brake, FLAGS_brake_inc_delta);
+          //   if (!FLAGS_use_acceleration) {
+          //     control_command_.set_brake(brake);
+          //   } else {
+          //     dec = brake / 100 * vehicle_params_.max_deceleration();
+          //     control_command_.set_acceleration(dec);
+          //   }
+          // }
           if (!FLAGS_use_acceleration) {
             AINFO << "Throttle = " << control_command_.throttle()
                   << ", Brake = " << control_command_.brake();
@@ -242,6 +245,10 @@ class Teleop {
         case KEYCODE_LF2:
           steering = control_command_.steering_target();
           steering = GetCommand(steering, FLAGS_steer_inc_delta);
+          steering_rate = control_command_.steering_rate();
+          steering_rate = GetCommand(steering_rate, FLAGS_steer_inc_delta);
+          control_command_.set_steering_rate(steering_rate);
+          printf("steering_rate = %f\n", steering_rate);
           control_command_.set_steering_target(steering);
           AINFO << "Steering Target = " << steering;
           break;
@@ -250,6 +257,9 @@ class Teleop {
           steering = control_command_.steering_target();
           steering = GetCommand(steering, -FLAGS_steer_inc_delta);
           control_command_.set_steering_target(steering);
+          steering_rate = GetCommand(steering_rate, -FLAGS_steer_inc_delta);
+          control_command_.set_steering_rate(steering_rate);
+          printf("steering_rate = %f\n", steering_rate);
           AINFO << "Steering Target = " << steering;
           break;
         case KEYCODE_PKBK1:  // hand brake

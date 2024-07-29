@@ -42,6 +42,7 @@
 
 #include "modules/canbus_vehicle/lincoln/protocol/akeman_control_181.h" //zhxf 20240725 阿克曼小车
 #include "modules/canbus_vehicle/lincoln/protocol/akeman_info_101.h"
+#include "modules/canbus_vehicle/lincoln/protocol/accel_103.h"
 
 namespace apollo {
 namespace canbus {
@@ -58,6 +59,7 @@ LincolnMessageManager::LincolnMessageManager() {
   //zhxf 20240725  阿克曼小车
   AddSendProtocolData<Akeman181, true>();
   AddRecvProtocolData<AkemanInfo101, true>();
+  AddRecvProtocolData<Accel103, true>();
 
   AddRecvProtocolData<Brake61, true>();
   AddRecvProtocolData<Throttle63, true>();

@@ -18,15 +18,19 @@ void AkemanInfo101::Parse(const std::uint8_t *bytes, int32_t length,
                     Lincoln *chassis_detail) const {
 
   double vel_x = parse_two_frames(bytes[3], bytes[2]);
-  vel_x = vel_x / 1000.0;
+  vel_x = vel_x / 1000.0; //单位由：0.001m/s 转换为m/s
   chassis_detail->mutable_gas()->set_throttle_output(vel_x);
 
+  double vel_y = parse_two_frames(bytes[5], bytes[4]);
+  vel_y = vel_y / 1000.0; //单位由：0.001m/s 转换为m/s
+
   double vel_z = parse_two_frames(bytes[7], bytes[6]);
-  vel_z = vel_z * M_PI/180.0;
+  vel_z = vel_z / 1000.0;  //单位由：0.001rad/s 转换为rad/s
   chassis_detail->mutable_eps()->set_steering_angle_spd(vel_z);
 
-  AWARN << "CurrentVel_X "<< vel_x;
-  AWARN << "CurrentVel_Z "<< vel_z;
+  AWARN << " CurrentVel_X "<< vel_x;
+  AWARN << " CurrentVel_Y "<< vel_y;
+  AWARN << " CurrentVel_Z "<< vel_z;
 }
 
 double AkemanInfo101::pedal_input(const std::uint8_t *bytes, int32_t length) const {

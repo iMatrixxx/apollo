@@ -35,7 +35,8 @@ apollo_cc_library(
         "protocol/version_7f.cc",
         "protocol/wheelspeed_6a.cc",
         "protocol/akeman_control_181.cpp",
-        "protocol/akeman_info_101.cpp"
+        "protocol/akeman_info_101.cpp",
+        "protocol/accel_103.cpp"
     ],
     hdrs = [
         "lincoln_controller.h",
@@ -65,7 +66,8 @@ apollo_cc_library(
         "protocol/version_7f.h",
         "protocol/wheelspeed_6a.h",
         "protocol/akeman_info_101.h",
-        "protocol/akeman_control_181.h"
+        "protocol/akeman_control_181.h",
+        "protocol/accel_103.h"
 
     ],
     copts = CANBUS_COPTS,

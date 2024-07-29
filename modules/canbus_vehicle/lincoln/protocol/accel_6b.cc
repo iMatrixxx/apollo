@@ -32,9 +32,11 @@ const int32_t Accel6b::ID = 0x102; //zhxf 20240725 阿克曼小车
 
 void Accel6b::Parse(const std::uint8_t *bytes, int32_t length,
                     Lincoln *chassis_detail) const {
-  double acc_y = lateral_acceleration(bytes, length);
-  double acc_x = longitudinal_acceleration(bytes, length);
-  double acc_z = vertical_acceleration(bytes, length);
+  double acc_y = lateral_acceleration(bytes, length) / 1672.0;
+  double acc_x = longitudinal_acceleration(bytes, length) / 1672.0;
+  double acc_z = vertical_acceleration(bytes, length) / 1672.0;
+
+  double angle_vel_x = parse_two_frames(bytes[3], bytes[2]) / 3753.0;
 
   chassis_detail->mutable_vehicle_spd()->set_lat_acc(acc_y);
   chassis_detail->mutable_vehicle_spd()->set_long_acc(acc_x);
@@ -43,6 +45,7 @@ void Accel6b::Parse(const std::uint8_t *bytes, int32_t length,
   AWARN << "Acc_X "<<acc_x;
   AWARN << "Acc_Y "<<acc_y;
   AWARN << "Acc_Z "<<acc_z;
+  AWARN << "Angle_Vel_X "<<angle_vel_x;
 
 }
 
@@ -83,7 +86,7 @@ double Accel6b::parse_two_frames(const std::uint8_t low_byte,
     value -= 0x10000;
   }
   //return value * 0.010000;   //apollo source code
-  return value / 1672.0; //zhxf 20240725 阿克曼小车
+  return value; //zhxf 20240725 阿克曼小车
 }
 
 }  // namespace lincoln
