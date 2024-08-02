@@ -38,7 +38,7 @@
 DEFINE_double(throttle_inc_delta, 0.01,
               "throttle pedal command delta percentage.");
 DEFINE_double(brake_inc_delta, 0.01, "brake pedal delta percentage");
-DEFINE_double(steer_inc_delta, 0.1, "steer delta percentage");
+DEFINE_double(steer_inc_delta, 0.05, "steer delta percentage");
 // TODO(ALL) : switch the acceleration cmd or pedal cmd
 // default : use pedal cmd
 DEFINE_bool(

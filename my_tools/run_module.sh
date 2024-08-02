@@ -30,6 +30,14 @@ case $module_name in
     echo "Run localization module..."
     ./bazel-bin/modules/ap_localization/ins_interface_main 
     ;;
+    teleop)
+    echo "Start Keyboard Control Car..."
+    ./bazel-bin/modules/canbus/tools/teleop
+    ;;
+    lidar_n10p)
+    echo "Open Lslidar N10_P..."
+    mainboard -d /apollo/modules/drivers/lidar/lslidar/dag/lslidarCH64.dag
+    ;;
     *)
         echo "Error: Unknown module '$module_name'"
         exit 2
