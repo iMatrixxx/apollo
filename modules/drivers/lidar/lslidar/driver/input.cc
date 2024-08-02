@@ -26,6 +26,8 @@
 #include <cstdint>
 #include <cstring>
 #include <cerrno>
+#include <arpa/inet.h> // 对于inet_ntop等函数 
+#include <netinet/in.h> 
 
 namespace apollo {
 namespace drivers {
@@ -56,6 +58,7 @@ InputSocket::InputSocket(uint16_t port, std::string lidar_ip, int packet_size)
   myAddress.sin_family = AF_INET;            // host byte order
   myAddress.sin_port = htons(port);          // port in network byte order
   myAddress.sin_addr.s_addr = INADDR_ANY;    // automatically fill in my IP
+ 
 
   if (bind(sockfd_, reinterpret_cast<sockaddr *>(&myAddress),
            sizeof(sockaddr)) == -1) {
@@ -106,6 +109,15 @@ int InputSocket::GetPacket(LslidarPacket *pkt) {
     ssize_t nbytes = recvfrom(sockfd_, bytes, packet_size_, 0,
                               reinterpret_cast<sockaddr *>(&sender_address),
                               &sender_address_len);
+
+    //debug address and port-------------------------------------------------------------------------------------------------                         
+    // char ip_str[INET_ADDRSTRLEN]; // 存储IP地址的字符串 
+    // inet_ntop(AF_INET, &sender_address.sin_addr, ip_str, sizeof(ip_str));
+    // std::cout<<"sender ip:"<< ip_str<<", Port: " << ntohs(sender_address.sin_port) << std::endl; //激光雷达ip地址和端口号：192.168.1.200：2368
+    // std::cout<<"packet_size_:"<< packet_size_<<std::endl; //数据帧字节数：108
+    // std::cout<<"port_:"<< port_<<std::endl;  //目的端口：2369
+    //-------------------------------------------------------------------------------------------------
+
     if (nbytes < 0) {
       if (errno != EWOULDBLOCK) {
         AERROR << "recvfail";
@@ -116,8 +128,13 @@ int InputSocket::GetPacket(LslidarPacket *pkt) {
         AERROR << "lidar IP parameter set error,please reset in config file";
         continue;
       } else {
-        pkt->set_data(bytes, packet_size_);
-        break;
+        if (bytes[0] == 0xA5 && bytes[1] == 0x5A & bytes[packet_size_-1] == N10_CalCRC8(bytes, packet_size_-1)) {
+            pkt->set_data(bytes, packet_size_);
+            break;
+         } else {
+           continue;
+         }
+
       }
     }
     AERROR << "incomplete lslidar packet read: " << nbytes << " bytes";
@@ -128,6 +145,19 @@ int InputSocket::GetPacket(LslidarPacket *pkt) {
   double time2 = apollo::cyber::Time().Now().ToSecond();
   AINFO << apollo::cyber::Time((time2 + time1) / 2.0).ToNanosecond();
   return 0;
+}
+
+uint8_t Input::N10_CalCRC8(uint8_t *p, int len)
+{
+  uint8_t crc = 0;
+  int sum = 0;
+
+  for (int i = 0; i < len; i++)
+  {
+    sum += uint8_t(p[i]);
+  }
+  crc = sum & 0xff;
+  return crc;
 }
 
 InputPCAP::InputPCAP(uint16_t port, std::string lidar_ip, int packet_size,

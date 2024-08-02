@@ -131,6 +131,8 @@ bool LslidarDriver::Poll(
   LslidarPacket *packet = scan->add_difop_pkts();
   std::unique_lock<std::mutex> lock(mutex_);
   packet->set_data(bytes, FIRING_DATA_PACKET_SIZE);
+
+  std::cout<<std::endl;
   scan->mutable_header()->set_timestamp_sec(gps_time);
   ADEBUG << "**************************************************************GPS "
             "time: "
@@ -358,70 +360,74 @@ int LslidarDriver::PollStandard(
     scan_fill = false;
     int i = 1;
     bool is_found_frame_header = false;
-    while (scan->firing_pkts_size() < config_.npackets() &&
-           !is_found_frame_header) {
-      LslidarPacket *packet = scan->add_firing_pkts();
+    // while (scan->firing_pkts_size() < config_.npackets() &&
+    //        !is_found_frame_header) {
+    while (scan->firing_pkts_size() < config_.npackets()) {
+      LslidarPacket *packet = scan->add_firing_pkts();  
       while (true) {
         // keep reading until full packet received
         int rc = input_->GetPacket(packet);
+        
         AINFO << "[debug ] line: " << __LINE__ << "  file: " << __FILE__;
         if (rc == 0) {
-          if (config_.model() == LSLIDAR_CH64w ||
-              config_.model() == LSLIDAR_CH120 ||
-              config_.model() == LSLIDAR_CH128X1 ||
-              config_.model() == LSLIDAR_CH32) {
-            if (!config_.time_synchronization()) {
+          // if (config_.model() == LSLIDAR_CH64w ||
+          //     config_.model() == LSLIDAR_CH120 ||
+          //     config_.model() == LSLIDAR_CH128X1 ||
+          //     config_.model() == LSLIDAR_CH32) {
+          //   if (!config_.time_synchronization()) {
               time_t t = time(NULL);
               localtime_r(&t, &current_time);
               current_time.tm_hour = current_time.tm_hour - 8;
               gps_time = apollo::cyber::Time().Now().ToNanosecond();
-            } else {
-              uint8_t *data = reinterpret_cast<uint8_t *>(
-                  const_cast<char *>(packet->data().c_str()));
-              current_time.tm_hour = static_cast<uint16_t>(data[1197]);
-              current_time.tm_min = static_cast<uint16_t>(data[1198]);
-              current_time.tm_sec = static_cast<uint16_t>(data[1199]);
-              basetime_ = static_cast<uint64_t>(timegm(&current_time));
-              if (time_service_mode == "gps") {
-                packet_time_ns_ =
-                    (static_cast<uint16_t>(data[1203]) +
-                     static_cast<uint16_t>(data[1202]) * pow(2, 8) +
-                     static_cast<uint16_t>(data[1201]) * pow(2, 16) +
-                     static_cast<uint16_t>(data[1200]) * pow(2, 24)) *
-                    1e3;  // ns
-              } else if (time_service_mode == "gptp") {
-                packet_time_ns_ =
-                    (static_cast<uint16_t>(data[1203]) +
-                     static_cast<uint16_t>(data[1202]) * pow(2, 8) +
-                     static_cast<uint16_t>(data[1201]) * pow(2, 16) +
-                     static_cast<uint16_t>(data[1200]) * pow(2, 24));  // ns
-              }
-              gps_time = basetime_ * 1000000000 + packet_time_ns_;
-            }
-          }
+          //   } else {
+          //     uint8_t *data = reinterpret_cast<uint8_t *>(
+          //         const_cast<char *>(packet->data().c_str()));
+          //     current_time.tm_hour = static_cast<uint16_t>(data[1197]);
+          //     current_time.tm_min = static_cast<uint16_t>(data[1198]);
+          //     current_time.tm_sec = static_cast<uint16_t>(data[1199]);
+          //     basetime_ = static_cast<uint64_t>(timegm(&current_time));
+          //     if (time_service_mode == "gps") {
+          //       packet_time_ns_ =
+          //           (static_cast<uint16_t>(data[1203]) +
+          //            static_cast<uint16_t>(data[1202]) * pow(2, 8) +
+          //            static_cast<uint16_t>(data[1201]) * pow(2, 16) +
+          //            static_cast<uint16_t>(data[1200]) * pow(2, 24)) *
+          //           1e3;  // ns
+          //     } else if (time_service_mode == "gptp") {
+          //       packet_time_ns_ =
+          //           (static_cast<uint16_t>(data[1203]) +
+          //            static_cast<uint16_t>(data[1202]) * pow(2, 8) +
+          //            static_cast<uint16_t>(data[1201]) * pow(2, 16) +
+          //            static_cast<uint16_t>(data[1200]) * pow(2, 24));  // ns
+          //     }
+          //     gps_time = basetime_ * 1000000000 + packet_time_ns_;
+          //   }
+          // }
           break;
         } else if (rc < 0) {
           return rc;
         }
       }
+
       packet->set_stamp(gps_time);  // 設置包的時間
       uint8_t *data = reinterpret_cast<uint8_t *>(
           const_cast<char *>(packet->data().c_str()));
 
-      for (size_t point_idx = 0; point_idx < POINTS_PER_PACKET;
-           point_idx += 7) {  // 一圈
-        if ((static_cast<uint16_t>(data[point_idx]) == 0xff) &&
-            (static_cast<uint16_t>(data[point_idx + 1]) == 0xaa) &&
-            (static_cast<uint16_t>(data[point_idx + 2]) == 0xbb) &&
-            (static_cast<uint16_t>(data[point_idx + 3]) == 0xcc)) {
-          scan_fill = false;
-          is_found_frame_header = true;
-          AERROR << "\none circle! scan->firing_pkts_size(): "
-                 << scan->firing_pkts_size();
-          break;
-        }
-      }
-      i++;
+
+      // for (size_t point_idx = 0; point_idx < POINTS_PER_PACKET;
+      //      point_idx += 7) {  // 一圈
+      //   if ((static_cast<uint16_t>(data[point_idx]) == 0xff) &&
+      //       (static_cast<uint16_t>(data[point_idx + 1]) == 0xaa) &&
+      //       (static_cast<uint16_t>(data[point_idx + 2]) == 0xbb) &&
+      //       (static_cast<uint16_t>(data[point_idx + 3]) == 0xcc)) {
+      //     scan_fill = false;
+      //     is_found_frame_header = true;
+      //     AERROR << "\none circle! scan->firing_pkts_size(): "
+      //            << scan->firing_pkts_size();
+      //     break;
+      //   }
+      // }
+      // i++; 
     }
   }
   return 0;
@@ -447,57 +453,58 @@ void LslidarDriver::difopPoll(void) {
       std::unique_lock<std::mutex> lock(mutex_);
       memcpy(bytes, data, FIRING_DATA_PACKET_SIZE);
     }
-    if (!config_.time_synchronization()) {
+  //   if (!config_.time_synchronization()) {
       time_t t = time(NULL);
       localtime_r(&t, &current_time);
       current_time.tm_hour = current_time.tm_hour - 8;
-    } else {
-      if (data[0] == 0xA5 && data[1] == 0xFF && data[2] == 0x00 &&
-          data[3] == 0x5A) {
-        if (config_.model() == LSLIDAR_CH16 ||
-            config_.model() == LSLIDAR_CH32 ||
-            config_.model() == LSLIDAR_CH128 ||
-            config_.model() == LSLIDAR_CH64) {
-          current_time.tm_year = static_cast<uint16_t>(data[36] + 100);
-          current_time.tm_mon = static_cast<uint16_t>(data[37] - 1);
-          current_time.tm_mday = static_cast<uint16_t>(data[38]);
-          current_time.tm_hour = static_cast<uint16_t>(data[39]);
-          current_time.tm_min = static_cast<uint16_t>(data[40]);
-          current_time.tm_sec = static_cast<uint16_t>(data[41]);
-        } else if (config_.model() == LSLIDAR_CH64w) {
-          current_time.tm_year = static_cast<uint16_t>(data[52] + 100);
-          current_time.tm_mon = static_cast<uint16_t>(data[53] - 1);
-          current_time.tm_mday = static_cast<uint16_t>(data[54]);
-          if (data[44] == 0x00) {  // gps授时
-            time_service_mode = "gps";
-          } else if (data[44] == 0x01) {  // ptp授时
-            time_service_mode = "gptp";
-          }
-        } else if (config_.model() == LSLIDAR_CH120) {
-          current_time.tm_year = static_cast<uint16_t>(data[36] + 100);
-          current_time.tm_mon = static_cast<uint16_t>(data[37] - 1);
-          current_time.tm_mday = static_cast<uint16_t>(data[38]);
-        } else if (config_.model() == LSLIDAR_CH128X1) {
-          current_time.tm_year = static_cast<uint16_t>(data[52] + 100);
-          current_time.tm_mon = static_cast<uint16_t>(data[53] - 1);
-          current_time.tm_mday = static_cast<uint16_t>(data[54]);
-          if (data[44] == 0x00) {  // gps授时
-            time_service_mode = "gps";
-          } else if (data[44] == 0x01) {  // ptp授时
-            time_service_mode = "gptp";
-          }
-        } else if (config_.packet_size() == 1206 &&
-                   (config_.model() == LSLIDAR32P ||
-                    config_.model() == LSLIDAR16P)) {
-          current_time.tm_year = static_cast<uint16_t>(data[52] + 100);
-          current_time.tm_mon = static_cast<uint16_t>(data[53] - 1);
-          current_time.tm_mday = static_cast<uint16_t>(data[54]);
-          current_time.tm_hour = static_cast<uint16_t>(data[55]);
-          current_time.tm_min = static_cast<uint16_t>(data[56]);
-          current_time.tm_sec = static_cast<uint16_t>(data[57]);
-        }
-      }
-    }
+  //   } else {
+  //     // if (data[0] == 0xA5 && data[1] == 0xFF && data[2] == 0x00 &&
+  //     //     data[3] == 0x5A) {
+  //     if (data[0] == 0xA5 && data[1] == 0x5A && data[2] == 0x6C) {
+  //       if (config_.model() == LSLIDAR_CH16 ||
+  //           config_.model() == LSLIDAR_CH32 ||
+  //           config_.model() == LSLIDAR_CH128 ||
+  //           config_.model() == LSLIDAR_CH64) {
+  //         current_time.tm_year = static_cast<uint16_t>(data[36] + 100);
+  //         current_time.tm_mon = static_cast<uint16_t>(data[37] - 1);
+  //         current_time.tm_mday = static_cast<uint16_t>(data[38]);
+  //         current_time.tm_hour = static_cast<uint16_t>(data[39]);
+  //         current_time.tm_min = static_cast<uint16_t>(data[40]);
+  //         current_time.tm_sec = static_cast<uint16_t>(data[41]);
+  //       } else if (config_.model() == LSLIDAR_CH64w) {
+  //         current_time.tm_year = static_cast<uint16_t>(data[52] + 100);
+  //         current_time.tm_mon = static_cast<uint16_t>(data[53] - 1);
+  //         current_time.tm_mday = static_cast<uint16_t>(data[54]);
+  //         if (data[44] == 0x00) {  // gps授时
+  //           time_service_mode = "gps";
+  //         } else if (data[44] == 0x01) {  // ptp授时
+  //           time_service_mode = "gptp";
+  //         }
+  //       } else if (config_.model() == LSLIDAR_CH120) {
+  //         current_time.tm_year = static_cast<uint16_t>(data[36] + 100);
+  //         current_time.tm_mon = static_cast<uint16_t>(data[37] - 1);
+  //         current_time.tm_mday = static_cast<uint16_t>(data[38]);
+  //       } else if (config_.model() == LSLIDAR_CH128X1) {
+  //         current_time.tm_year = static_cast<uint16_t>(data[52] + 100);
+  //         current_time.tm_mon = static_cast<uint16_t>(data[53] - 1);
+  //         current_time.tm_mday = static_cast<uint16_t>(data[54]);
+  //         if (data[44] == 0x00) {  // gps授时
+  //           time_service_mode = "gps";
+  //         } else if (data[44] == 0x01) {  // ptp授时
+  //           time_service_mode = "gptp";
+  //         }
+  //       } else if (config_.packet_size() == 1206 &&
+  //                  (config_.model() == LSLIDAR32P ||
+  //                   config_.model() == LSLIDAR16P)) {
+  //         current_time.tm_year = static_cast<uint16_t>(data[52] + 100);
+  //         current_time.tm_mon = static_cast<uint16_t>(data[53] - 1);
+  //         current_time.tm_mday = static_cast<uint16_t>(data[54]);
+  //         current_time.tm_hour = static_cast<uint16_t>(data[55]);
+  //         current_time.tm_min = static_cast<uint16_t>(data[56]);
+  //         current_time.tm_sec = static_cast<uint16_t>(data[57]);
+  //       }
+  //     }
+  //   }
   }
 }
 

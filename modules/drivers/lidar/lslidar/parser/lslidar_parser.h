@@ -163,8 +163,10 @@ union four_bytes {
   uint32_t uint;
   uint8_t bytes[4];
 };
-static const int PACKET_SIZE = 1212;
-static const int POINTS_PER_PACKET = 171;
+//static const int PACKET_SIZE = 1212;
+//static const int POINTS_PER_PACKET = 171;
+static const int PACKET_SIZE = 108;
+static const int POINTS_PER_PACKET = 16;
 static const int LS_POINTS_PER_PACKET = 149;  // LS128S2 149 points
 static const int BLOCKS_PER_PACKET = 12;
 static const int PACKET_STATUS_SIZE = 4;
@@ -455,6 +457,13 @@ struct RawPacket_LS128S2 {
   uint8_t factory[2];
 };
 
+//zhxf 20240731 阿克曼
+typedef struct {
+    double degree;
+    double range;
+    double intensity;
+} ScanPointN10P;
+
 static const float nan = std::numeric_limits<float>::signaling_NaN();
 
 /** \brief Lslidar data conversion class */
@@ -697,6 +706,7 @@ class LslidarCH64Parser : public LslidarParser {
       const std::shared_ptr<LslidarScan>& scan_msg,
       const std::shared_ptr<apollo::drivers::PointCloud>& out_msg);
   void Order(std::shared_ptr<apollo::drivers::PointCloud> cloud);
+  void data_processing(unsigned char *packet_bytes, int len); //zhxf 20240731 阿克曼小车 
 
  private:
   void Unpack(int num, const LslidarPacket& pkt,
@@ -711,6 +721,14 @@ class LslidarCH64Parser : public LslidarParser {
   uint64_t time_last;
   uint8_t difop_data[PACKET_SIZE];
   Firing firings[POINTS_PER_PACKET];
+
+  double degree_compensation = 0.0;
+  int idx = 0;
+  std::vector<ScanPointN10P> scan_points_;
+  double last_degree = 0.0;
+  int count_num = 0; 
+  apollo::cyber::Time pre_time_;
+  apollo::cyber::Time time_;
 };  // class LslidarCH64Parser
 
 class LslidarCH64wParser : public LslidarParser {

@@ -36,6 +36,15 @@ message Config {
   optional float top_right_x = 29;
   optional float top_right_y = 30;
   optional string pcap_path = 31;
+  optional int32 degree_bits_start = 32;
+  optional int32 end_degree_bits_start = 33;
+  optional int32 package_points = 34;
+  optional int32 data_bits_start = 35;
+  optional float angle_disable_min = 36;
+  optional float angle_disable_max = 37;
+  optional double angle_able_min = 38;
+  optional double angle_able_max = 39;
+  optional int32 points_size = 40;
 }
 
 message CompensatorConfig {

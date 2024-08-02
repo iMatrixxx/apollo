@@ -59,7 +59,7 @@ bool LslidarConvertComponent::Proc(
   if (point_cloud_out == nullptr) {
     AWARN << "poin cloud pool return nullptr, will be create new.";
     point_cloud_out = std::make_shared<apollo::drivers::PointCloud>();
-    point_cloud_out->mutable_point()->Reserve(200000);
+    point_cloud_out->mutable_point()->Reserve(6000);
   }
   if (point_cloud_out == nullptr) {
     AWARN << "point cloud out is nullptr";
@@ -69,7 +69,7 @@ bool LslidarConvertComponent::Proc(
   uint64_t time1 = apollo::cyber::Time().Now().ToNanosecond();
   AINFO << "receive scan!---------";
   point_cloud_out->Clear();
-  conv_->ConvertPacketsToPointcloud(scan_msg, point_cloud_out);
+  conv_->ConvertPacketsToPointcloud(scan_msg, point_cloud_out);  //将原始数据解析为点云数据
   uint64_t time2 = apollo::cyber::Time().Now().ToNanosecond();
   AINFO << "process pointcloud time: " << (time2 - time1) / 1000000000.0;
 

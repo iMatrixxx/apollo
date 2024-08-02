@@ -30,14 +30,15 @@ namespace apollo {
 namespace drivers {
 namespace lslidar {
 
-static const size_t FIRING_DATA_PACKET_SIZE = 1212;
+static const size_t FIRING_DATA_PACKET_SIZE = 108;
 static uint16_t MSOP_DATA_PORT_NUMBER =
     2368;  // lslidar default data port on PC
 
 class Input {
  public:
   Input(uint16_t portport = MSOP_DATA_PORT_NUMBER,
-        std::string lidar_ip = "192.168.1.200", int packet_size = 1212);
+        std::string lidar_ip = "192.168.1.200", int packet_size = 108);
+  uint8_t N10_CalCRC8(uint8_t *p, int len);
   virtual ~Input();
   virtual int GetPacket(LslidarPacket *pkt);
 

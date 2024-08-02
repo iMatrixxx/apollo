@@ -2,7 +2,7 @@ model: LSLIDAR_CH64
 device_ip: "192.168.1.200"
 msop_port: 2368
 difop_port: 2369
-packet_size: 1206
+packet_size: 108
 time_synchronization: true
 add_multicast: false
 group_ip: "224.1.1.2"
@@ -10,8 +10,8 @@ rpm: 600
 convert_channel_name: "/apollo/sensor/lslidarCH64/PointCloud2"
 frame_id: "lslidarCH64"
 scan_channel: "/apollo/sensor/lslidarCH64/Scan"
-min_range: 0.15
-max_range: 150.0
+min_range: 0.2
+max_range: 200.0
 calibration: true
 calibration_file: "/apollo/modules/drivers/lidar/lslidar/params/LSCH64_calibration.yaml"
 
@@ -21,3 +21,14 @@ bottom_left_y: 0.0             #左下 y值
 top_right_x: 0.0               #右上 x值
 top_right_y: 0.0               #右上 y值
 pcap_path: ""    #读取pcap包，测试时使用，连接雷达的时候，将此值设置为空
+
+#zhxf 20240731 阿克曼小车
+degree_bits_start:5  #起始角度，字节索引
+end_degree_bits_start: 105 #结束角度，字节索引
+package_points:16  #每一帧数据包含的点数
+data_bits_start:7  #点云数据起始字节
+angle_disable_min:0.0
+angle_disable_max:0.0
+angle_able_min:0.0
+angle_able_max:360.0
+points_size:16
