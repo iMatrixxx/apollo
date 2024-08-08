@@ -64,4 +64,44 @@ message Config {
   }
   optional TimeCompensatorConfig time_compensator_conf = 30;
   optional bool arm_gpu_acceleration = 31 [default = false];
+
+    //zhxf 20240806 阿克曼
+  optional string serial_number = 32;
+  optional int32  number_of_devices = 33;
+  optional int32  reconnection_delay = 34 [default = 1000];
+  optional string camera_name = 35;
+
+  message CameraSetConfig {
+    optional int32 width = 1;
+    optional int32 height = 2;
+    optional int32 fps = 3;
+    optional bool  enable = 4;
+  }
+  optional CameraSetConfig color_camera = 36;
+  optional CameraSetConfig ir_camera = 37;
+  optional CameraSetConfig depth_camera = 38;
+
+  optional bool   depth_align = 39;
+
+  message CameraRoi {
+    optional int32 x = 1;
+    optional int32 y = 2;
+    optional int32 width = 3;
+    optional int32 height = 4;
+  }
+  
+  optional CameraRoi color_camera_roi = 40;
+  optional CameraRoi depth_camera_roi = 41;
+
+  optional int32 depth_scale = 42;
+  optional double reconnect_timeout = 43;
+  optional string color_channel_name = 44;
+  optional string depth_channel_name = 45;
+  optional string ir_channel_name = 46;
+  optional bool color_depth_synchronization = 47;
+  optional string pixel_format_color = 48;
+  optional string  pixel_format_depth = 49;
+  optional string pixel_format_ir = 50;
+
+  
 }

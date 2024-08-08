@@ -40,3 +40,50 @@ time_compensator_conf {
 }
 
 arm_gpu_acceleration: true
+
+serial_number:""
+number_of_devices:1
+reconnection_delay:1000
+camera_name:"camera"
+color_camera {
+    width:640
+    height:480
+    fps:30
+    enable:true
+} 
+
+ir_camera {
+    width:640
+    height:480
+    fps:30
+    enable:false
+}
+
+depth_camera {
+    width:640
+    height:480
+    fps:30
+    enable:true
+}
+depth_align:false
+color_camera_roi {
+    x:-1
+    y:-1
+    width:-1
+    height:-1
+}
+depth_camera_roi {
+    x:-1
+    y:-1
+    width:1
+    height:1
+}
+depth_scale:1
+reconnect_timeout:6.0
+color_channel_name:"/apollo/sensor/camera/astra/color/image"
+depth_channel_name:"/apollo/sensor/camera/astra/depth/image"
+ir_channel_name:"/apollo/sensor/camera/astra/ir/image"
+color_depth_synchronization:false
+pixel_format_color:"RGB8"
+pixel_format_depth:"TYPE_16UC1"
+pixel_format_ir:"MONO16"

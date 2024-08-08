@@ -21,11 +21,23 @@
 #include <memory>
 #include <vector>
 
+//---------------------------
+#include <thread>
+#include <fcntl.h>
+#include <opencv2/opencv.hpp>
+
 #include "cyber/cyber.h"
 #include "modules/drivers/camera/proto/config.pb.h"
 #include "modules/common_msgs/sensor_msgs/sensor_image.pb.h"
 
-#include "modules/drivers/camera/usb_cam.h"
+//#include "modules/drivers/camera/usb_cam.h"
+
+//zhxf 20240806 阿克曼小车
+#include "third_party/camera_library/astracamera/include/OpenNI.h"
+#include "modules/drivers/camera/astracamera/device_listener.h"
+#include "modules/drivers/camera/proto/config.pb.h"
+#include "modules/drivers/camera/astracamera/ob_frame_listener.h"
+
 
 namespace apollo {
 namespace drivers {
@@ -44,7 +56,9 @@ class CameraComponent : public Component<> {
 
  private:
   void run();
+  
 
+  /*********************************************************************** 
   std::shared_ptr<Writer<Image>> writer_ = nullptr;
   std::shared_ptr<Writer<Image>> raw_writer_ = nullptr;
   std::unique_ptr<UsbCam> camera_device_;
@@ -60,6 +74,67 @@ class CameraComponent : public Component<> {
   const int32_t MAX_IMAGE_SIZE = 20 * 1024 * 1024;
   std::future<void> async_result_;
   std::atomic<bool> running_ = {false};
+  *************************************************************************/
+
+  //---------------------------------------------------------------------------
+  void onDeviceConnected(const openni::DeviceInfo* device_info);
+  void onDeviceDisconnected(const openni::DeviceInfo* device_info);
+  void setupConfig();
+  void setupFrameCallback();
+  void setupPublishers();
+  void setupVideoMode();
+  void setupDevices();
+  void startStreams();
+  void setDepthColorSync(bool data);
+  void setImageRegistrationMode(bool data);
+  void stopStreams();
+  void clean();
+  void onNewFrameCallback(const openni::VideoFrameRef& frame,
+                                      const stream_index_pair& stream_index); 
+  uint8_t* matToBytes(cv::Mat image);
+  std::future<void> async_result_;
+  std::shared_ptr<Config> camera_config_;
+  std::atomic<bool> running_ = {false};
+  
+  std::atomic_bool is_alive_{false};
+  std::shared_ptr<openni::Device> device_ = nullptr;
+  openni::DeviceInfo device_info_;
+  std::unique_ptr<DeviceListener> device_listener_ = nullptr;
+  std::string serial_number_;
+  std::string device_type_;
+  std::string device_uri_;
+  std::shared_ptr<cyber::Timer> check_connection_timer_;
+  std::atomic_bool device_connected_{false};
+  size_t number_of_devices_;
+  std::unordered_map<std::string, openni::DeviceInfo> connected_devices_;
+  long reconnection_delay_ = 0;
+  bool is_first_connection_ = true;
+
+  std::map<stream_index_pair, std::string> stream_name_;
+  std::map<stream_index_pair, int> unit_step_size_;
+  std::map<stream_index_pair, openni::PixelFormat> format_;
+  std::map<stream_index_pair, int> image_format_;
+  std::map<stream_index_pair, std::string> encoding_;
+
+  std::map<stream_index_pair, std::string> optical_frame_id_;
+  std::map<stream_index_pair, std::string> frame_id_;
+  std::map<stream_index_pair, std::string> depth_aligned_frame_id_;
+  std::string camera_link_frame_id_;
+
+  std::map<stream_index_pair, int> width_;
+  std::map<stream_index_pair, int> height_;
+  std::map<stream_index_pair, int> fps_;
+  std::map<stream_index_pair, bool> enable_;
+  std::map<stream_index_pair, bool> stream_started_;
+  std::map<stream_index_pair, FrameCallbackFunction> stream_frame_callback_;
+  std::map<stream_index_pair, cv::Mat> images_;
+  std::map<stream_index_pair, std::shared_ptr<Writer<Image>>> image_writer_;
+
+  std::map<stream_index_pair, std::vector<openni::VideoMode>> supported_video_modes_;
+  std::map<stream_index_pair, openni::VideoMode> stream_video_mode_;
+  std::map<stream_index_pair, std::shared_ptr<OBFrameListener>> stream_frame_listener_;
+  std::map<stream_index_pair, std::shared_ptr<openni::VideoStream>> streams_;
+
 };
 
 CYBER_REGISTER_COMPONENT(CameraComponent)

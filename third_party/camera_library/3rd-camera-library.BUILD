@@ -26,3 +26,26 @@ cc_library(
     visibility = ["//visibility:public"],
     alwayslink = True,
 )
+
+cc_library(
+    name = "astracamera",
+    srcs = glob(["lib/*.so*"]),
+    hdrs = glob(["include/*.h"]),
+    copts = [
+        "-Iinclude",
+    ],
+    linkopts = [
+        "-Llib",
+    ],
+    include_prefix = "third_party/camera_library/astracamera",
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "third_party_Scamera_library_Sastracamera_Castracamera",
+    srcs = glob(["lib/*.so*"]),
+    hdrs = glob(["include/*.h"]),
+    include_prefix = "third_party/camera_library/astracamera",
+    visibility = ["//visibility:public"],
+    alwayslink = True,
+)
