@@ -83,7 +83,10 @@ void LslidarCH64Parser::Unpack(int num, const LslidarPacket& pkt,
   // std::cout<<std::endl;
 
   data_processing(data, 6);
-  PubLaserScan(laser_scan_writer);
+  if (count_num != 0) {
+    PubLaserScan(laser_scan_writer);
+  }
+  
   pc->mutable_header()->set_timestamp_sec(apollo::cyber::Time().Now().ToSecond());
   pc->set_frame_id(config_.frame_id());
   pc->set_height(1);
@@ -256,26 +259,48 @@ void LslidarCH64Parser::PubLaserScan(
 
   scan.mutable_intensities()->Reserve(scan_num);
 
+  float temp_ranges[count_num];
+  float temp_intensities[count_num];
+
   for (int k = 0; k < scan_num; k++)
   {
-    scan.set_ranges(k, std::numeric_limits<float>::infinity());
-    scan.set_intensities(k, 0);
+    scan.add_ranges(std::numeric_limits<float>::infinity());
+    // temp_ranges[k] = std::numeric_limits<float>::infinity();
+    // temp_intensities[k] = 0.0;
+    scan.add_ranges(0);
   }
+
+
 
   for (int i = 0; i < count_num; i++)
   {
     int point_idx = round((360 - scan_points_[i].degree) * count_num / 360);
+    AERROR << "point_idx: "<<point_idx << "count_num: "<<count_num;
     if (scan_points_[i].range == 0.0)
     {
-      scan.set_ranges(point_idx, std::numeric_limits<float>::infinity());
-      scan.set_intensities(point_idx, 0);
+      temp_ranges[point_idx] = std::numeric_limits<float>::infinity();
+      temp_intensities[point_idx] = 0.0;
+      // scan.mutable_ranges()->Set(point_idx, std::numeric_limits<float>::infinity());
+      // scan.mutable_intensities()->Set(point_idx, 0.0);
+      // scan.set_ranges(point_idx, std::numeric_limits<float>::infinity());
+      // scan.set_intensities(point_idx, 0.0)
+
     }
     else
     {
       double dist = scan_points_[i].range;
-      scan.set_ranges(point_idx, (float)dist);
-      scan.set_intensities(point_idx, scan_points_[i].intensity);
+
+      temp_ranges[point_idx] = (float)dist;
+      temp_intensities[point_idx] = scan_points_[i].intensity;
+      // scan.mutable_ranges()->Set(point_idx, (float)dist);
+      // scan.mutable_intensities()->Set(point_idx, scan_points_[i].intensity);
+
     }
+  }
+
+  for (int i = 0; i < count_num; i++) {
+    scan.add_ranges(temp_ranges[i]);
+    scan.add_intensities(temp_intensities[i]);
   }
   laser_scan_writer->Write(scan);
 }
