@@ -27,7 +27,8 @@ LslidarCH128Parser::LslidarCH128Parser(const Config &config)
 
 void LslidarCH128Parser::GeneratePointcloud(
     const std::shared_ptr<LslidarScan> &scan_msg,
-    const std::shared_ptr<PointCloud> &out_msg) {
+    const std::shared_ptr<PointCloud> &out_msg,
+    const std::shared_ptr<cyber::Writer<apollo::akman::LaserScan>>& laser_scan_writer) {
   // allocate a point cloud with same time and frame ID as raw data
   out_msg->mutable_header()->set_timestamp_sec(scan_msg->basetime() /
                                                1000000000.0);

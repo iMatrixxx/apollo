@@ -54,6 +54,7 @@ apollo_cc_library(
         "//modules/common_msgs/sensor_msgs:pointcloud_cc_proto",
         "//modules/drivers/lidar/lslidar/proto:config_cc_proto",
         "//modules/drivers/lidar/lslidar/proto:lslidar_cc_proto",
+        "//modules/common_msgs/akman_msgs:laser_scan_cc_proto",
         "@com_github_jbeder_yaml_cpp//:yaml-cpp",
     ],
 )

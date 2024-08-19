@@ -48,6 +48,8 @@ bool LslidarConvertComponent::Init() {
     point_cloud->mutable_point()->Reserve(200000);
   }
 
+  laser_scan_writer_ = node_->CreateWriter<apollo::akman::LaserScan>(lslidar_config.laser_scan_channel_name());
+
   AINFO << "Point cloud comp convert init success";
   return true;
 }
@@ -69,7 +71,7 @@ bool LslidarConvertComponent::Proc(
   uint64_t time1 = apollo::cyber::Time().Now().ToNanosecond();
   AINFO << "receive scan!---------";
   point_cloud_out->Clear();
-  conv_->ConvertPacketsToPointcloud(scan_msg, point_cloud_out);  //将原始数据解析为点云数据
+  conv_->ConvertPacketsToPointcloud(scan_msg, point_cloud_out, laser_scan_writer_);  //将原始数据解析为点云数据
   uint64_t time2 = apollo::cyber::Time().Now().ToNanosecond();
   AINFO << "process pointcloud time: " << (time2 - time1) / 1000000000.0;
 

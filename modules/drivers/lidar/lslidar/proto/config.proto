@@ -45,6 +45,7 @@ message Config {
   optional double angle_able_min = 38;
   optional double angle_able_max = 39;
   optional int32 points_size = 40;
+  optional string laser_scan_channel_name = 41;
 }
 
 message CompensatorConfig {

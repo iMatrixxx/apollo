@@ -21,12 +21,15 @@ namespace drivers {
 namespace lslidar {
 
 LslidarCH64Parser::LslidarCH64Parser(const Config& config)
-    : LslidarParser(config), previous_packet_stamp_(0), gps_base_usec_(0) {scan_points_.resize(50);}
+    : LslidarParser(config), previous_packet_stamp_(0), gps_base_usec_(0) {
+      scan_points_.resize(50);
+}
 
 //产生点云数据
 void LslidarCH64Parser::GeneratePointcloud(
     const std::shared_ptr<LslidarScan>& scan_msg,
-    const std::shared_ptr<PointCloud>& out_msg) {
+    const std::shared_ptr<PointCloud>& out_msg, 
+    const std::shared_ptr<cyber::Writer<apollo::akman::LaserScan>>& laser_scan_writer) {
   // allocate a point cloud with same time and frame ID as raw data
   out_msg->mutable_header()->set_timestamp_sec(scan_msg->basetime() /
                                                1000000000.0);
@@ -42,7 +45,7 @@ void LslidarCH64Parser::GeneratePointcloud(
 
   for (size_t i = 0; i < packets_size; ++i) {
     Unpack(static_cast<int>(i), scan_msg->firing_pkts(static_cast<int>(i)),
-           out_msg);
+           out_msg, laser_scan_writer);
     last_time_stamp_ = out_msg->measurement_time();
     ADEBUG << "stamp: " << std::fixed << last_time_stamp_;
   }
@@ -61,7 +64,8 @@ void LslidarCH64Parser::GeneratePointcloud(
  *  @param pc shared pointer to point cloud (points are appended)
  */
 void LslidarCH64Parser::Unpack(int num, const LslidarPacket& pkt,
-                               std::shared_ptr<PointCloud> pc) {
+                               std::shared_ptr<PointCloud> pc,
+                               const std::shared_ptr<cyber::Writer<apollo::akman::LaserScan>>& laser_scan_writer) {
   float x, y, z;
   uint64_t point_time;
   //uint64_t packet_end_time;
@@ -79,6 +83,7 @@ void LslidarCH64Parser::Unpack(int num, const LslidarPacket& pkt,
   // std::cout<<std::endl;
 
   data_processing(data, 6);
+  PubLaserScan(laser_scan_writer);
   pc->mutable_header()->set_timestamp_sec(apollo::cyber::Time().Now().ToSecond());
   pc->set_frame_id(config_.frame_id());
   pc->set_height(1);
@@ -229,8 +234,55 @@ void LslidarCH64Parser::Unpack(int num, const LslidarPacket& pkt,
   // }
 }
 
-void LslidarCH64Parser::data_processing(unsigned char *packet_bytes, int len) // 处理每一包的数据
-	{
+void LslidarCH64Parser::PubLaserScan(
+  const std::shared_ptr<cyber::Writer<apollo::akman::LaserScan>>& laser_scan_writer) {
+
+  auto scan = apollo::akman::LaserScan();
+  ////int scan_num = count_num * 2;
+  int scan_num = count_num ;
+
+  std::vector<ScanPointN10P> points;
+  scan.mutable_header()->set_frame_id(config_.frame_id());
+
+  scan.mutable_header()->set_timestamp_sec(apollo::cyber::Time::Now().ToSecond()); // timestamp will obtained from sweep data stamp
+  
+
+  scan.set_angle_min(0);
+  scan.set_angle_max(2 * M_PI);
+  scan.set_angle_increment(2 * M_PI / (double)(count_num));
+  scan.set_range_min(config_.min_range());
+  scan.set_range_max(config_.max_range());
+  scan.mutable_ranges()->Reserve(scan_num);
+
+  scan.mutable_intensities()->Reserve(scan_num);
+
+  for (int k = 0; k < scan_num; k++)
+  {
+    scan.set_ranges(k, std::numeric_limits<float>::infinity());
+    scan.set_intensities(k, 0);
+  }
+
+  for (int i = 0; i < count_num; i++)
+  {
+    int point_idx = round((360 - scan_points_[i].degree) * count_num / 360);
+    if (scan_points_[i].range == 0.0)
+    {
+      scan.set_ranges(point_idx, std::numeric_limits<float>::infinity());
+      scan.set_intensities(point_idx, 0);
+    }
+    else
+    {
+      double dist = scan_points_[i].range;
+      scan.set_ranges(point_idx, (float)dist);
+      scan.set_intensities(point_idx, scan_points_[i].intensity);
+    }
+  }
+  laser_scan_writer->Write(scan);
+}
+
+void LslidarCH64Parser::data_processing(
+  unsigned char *packet_bytes, 
+  int len) {
 		double degree;
 		double end_degree;
 		double degree_interval = 15.0;

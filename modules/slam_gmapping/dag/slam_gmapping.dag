@@ -1,0 +1,10 @@
+module_config {
+    module_library : "bazel-bin/modules/slam_gmapping/libslam_gmapping_component.so"
+    components {
+        class_name : "SlamGmappingComponent"
+        config {
+            name:"slam_gmapping"
+            config_file_path:"modules/slam_gmapping/conf/slam_gmapping_conf.pb.txt"
+        }
+    }
+}

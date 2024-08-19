@@ -1,0 +1,12 @@
+syntax = "proto2";
+
+package apollo.akman;
+
+import "modules/common_msgs/akman_msgs/map_meta_data.proto";
+import "modules/common_msgs/basic_msgs/header.proto";
+
+message OccupancyGrid {
+    optional apollo.common.Header header = 1;
+    optional apollo.akman.MapMetaData meta_data = 2;
+    repeated int32 data = 3;  //地图从左上角[0,0]按行存储, data表示每个点被占用的概率[0,100], -1表示未知
+}

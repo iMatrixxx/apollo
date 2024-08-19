@@ -38,3 +38,6 @@ message LslidarScan {
   optional string sn = 5;
   optional uint64 basetime = 6 [default = 0];
 }
+
+
+

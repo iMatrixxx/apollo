@@ -22,6 +22,7 @@
 
 #include "modules/drivers/lidar/lslidar/proto/config.pb.h"
 #include "modules/drivers/lidar/lslidar/proto/lslidar.pb.h"
+#include "modules/common_msgs/akman_msgs/laser_scan.pb.h"
 
 #include "cyber/base/concurrent_object_pool.h"
 #include "cyber/cyber.h"
@@ -47,6 +48,7 @@ class LslidarConvertComponent
 
  private:
   std::shared_ptr<Writer<apollo::drivers::PointCloud>> writer_;
+  std::shared_ptr<cyber::Writer<apollo::akman::LaserScan>> laser_scan_writer_;
   std::unique_ptr<Convert> conv_ = nullptr;
   std::shared_ptr<CCObjectPool<apollo::drivers::PointCloud>> point_cloud_pool_ =
       nullptr;

@@ -1,0 +1,27 @@
+syntax = "proto2";
+
+package apollo.akman;
+
+import "modules/common_msgs/basic_msgs/header.proto";
+
+//zhxf 20240815 阿克曼小车
+message LaserScan {
+  //timestamp in the header is the acquisition time of the first ray in the scan.
+  //in frame frame_id, angles are measured around 
+  //the positive Z axis (counterclockwise, if Z is up)
+  //with zero angle being forward along the x axis
+  optional apollo.common.Header header = 1;
+  optional float angle_min = 2;  // start angle of the scan [rad]
+  optional float angle_max = 3;  // end angle of the scan [rad]
+  optional float angle_increment = 4;  // angular distance between measurements [rad]
+
+  optional float time_increment = 5;  // time between measurements [seconds] - if your scanner
+  //is moving, this will be used in interpolating position of 3d points
+  optional float scan_time = 6;  // time between scans [seconds]
+  
+  optional float range_min = 7;  // minimum range value [m]
+  optional float range_max = 8;  // maximum range value [m]
+  repeated float ranges = 9;  // range data [m] (Note: values < range_min or > range_max should be discarded)
+   // intensity data [device-specific units] If your device does not provide intensities, please leave the array empty.
+  repeated float intensities = 10;  
+}

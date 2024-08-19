@@ -39,11 +39,12 @@ void Convert::init(const Config& lslidar_config) {
 /** @brief Callback for raw scan messages. */
 void Convert::ConvertPacketsToPointcloud(
     const std::shared_ptr<apollo::drivers::lslidar::LslidarScan>& scan_msg,
-    std::shared_ptr<apollo::drivers::PointCloud> point_cloud) {
+    std::shared_ptr<apollo::drivers::PointCloud> point_cloud,
+    const std::shared_ptr<cyber::Writer<apollo::akman::LaserScan>>& laser_scan_writer) {
   AINFO_EVERY(100) << "Converting scan msg seq "
                    << scan_msg->header().sequence_num();
 
-  parser_->GeneratePointcloud(scan_msg, point_cloud);
+  parser_->GeneratePointcloud(scan_msg, point_cloud, laser_scan_writer);
 
   if (point_cloud == nullptr || point_cloud->point().empty()) {
     AERROR << "point cloud has no point";

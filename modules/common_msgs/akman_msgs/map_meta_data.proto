@@ -1,0 +1,18 @@
+syntax = "proto2";
+
+package apollo.akman;
+
+import "modules/common_msgs/basic_msgs/geometry.proto";
+
+message MapMetaData {
+    optional double map_load_time = 1; // time when map was loaded
+    optional double resolution    = 2; // resolution of the map [m/cell]
+    optional uint32 width = 3;  // width of the map [cells]
+    optional uint32 height = 4; // height of the map [cells]
+    optional Pose   origin = 5; // 地图的原点，[m, m, rad],即网格[0,0]在真实世界的位置和朝向
+}
+
+message Pose {
+    optional apollo.common.Point3D position = 1;
+    optional apollo.common.Quaternion orientation = 2;
+}

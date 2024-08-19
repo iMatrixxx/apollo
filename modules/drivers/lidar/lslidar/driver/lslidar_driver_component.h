@@ -21,6 +21,7 @@
 #include "modules/drivers/lidar/lslidar/proto/config.pb.h"
 #include "modules/drivers/lidar/lslidar/proto/lslidar.pb.h"
 
+
 #include "cyber/cyber.h"
 #include "modules/common/util/message_util.h"
 #include "modules/drivers/lidar/lslidar/driver/driver.h"

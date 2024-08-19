@@ -32,3 +32,4 @@ angle_disable_max:0.0
 angle_able_min:0.0
 angle_able_max:360.0
 points_size:16
+laser_scan_channel_name:"/apollo/sensor/laser_scan"

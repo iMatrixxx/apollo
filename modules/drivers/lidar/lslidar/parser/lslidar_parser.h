@@ -58,6 +58,8 @@
 #include "modules/common_msgs/sensor_msgs/pointcloud.pb.h"
 #include "modules/drivers/lidar/lslidar/proto/config.pb.h"
 #include "modules/drivers/lidar/lslidar/proto/lslidar.pb.h"
+#include "modules/common_msgs/akman_msgs/laser_scan.pb.h" //zhxf akman
+
 
 #include "cyber/cyber.h"
 #include "modules/drivers/lidar/lslidar/parser/calibration.h"
@@ -484,7 +486,8 @@ class LslidarParser {
    */
   virtual void GeneratePointcloud(
       const std::shared_ptr<LslidarScan>& scan_msg,
-      const std::shared_ptr<apollo::drivers::PointCloud>& out_msg) = 0;
+      const std::shared_ptr<apollo::drivers::PointCloud>& out_msg, 
+      const std::shared_ptr<cyber::Writer<apollo::akman::LaserScan>>& laser_scan_writer) = 0;
   virtual void setup();
 
   // Order point cloud fod IDL by lslidar model
@@ -530,7 +533,8 @@ class Lslidar16Parser : public LslidarParser {
 
   void GeneratePointcloud(
       const std::shared_ptr<apollo::drivers::lslidar::LslidarScan>& scan_msg,
-      const std::shared_ptr<apollo::drivers::PointCloud>& out_msg);
+      const std::shared_ptr<apollo::drivers::PointCloud>& out_msg, 
+      const std::shared_ptr<cyber::Writer<apollo::akman::LaserScan>>& laser_scan_writer);
   void Order(std::shared_ptr<apollo::drivers::PointCloud> cloud);
 
  private:
@@ -554,7 +558,8 @@ class Lslidar32Parser : public LslidarParser {
 
   void GeneratePointcloud(
       const std::shared_ptr<apollo::drivers::lslidar::LslidarScan>& scan_msg,
-      const std::shared_ptr<apollo::drivers::PointCloud>& out_msg);
+      const std::shared_ptr<apollo::drivers::PointCloud>& out_msg, 
+      const std::shared_ptr<cyber::Writer<apollo::akman::LaserScan>>& laser_scan_writer);
   void Order(std::shared_ptr<apollo::drivers::PointCloud> cloud);
 
  private:
@@ -590,7 +595,8 @@ class LslidarCXV4Parser : public LslidarParser {
 
   void GeneratePointcloud(
       const std::shared_ptr<apollo::drivers::lslidar::LslidarScan>& scan_msg,
-      const std::shared_ptr<apollo::drivers::PointCloud>& out_msg);
+      const std::shared_ptr<apollo::drivers::PointCloud>& out_msg,
+      const std::shared_ptr<cyber::Writer<apollo::akman::LaserScan>>& laser_scan_writer);
   void Order(std::shared_ptr<apollo::drivers::PointCloud> cloud);
 
   bool checkPacketValidity(const RawPacket_C32* packet);
@@ -631,7 +637,8 @@ class Lslidar401Parser : public LslidarParser {
 
   void GeneratePointcloud(
       const std::shared_ptr<LslidarScan>& scan_msg,
-      const std::shared_ptr<apollo::drivers::PointCloud>& out_msg);
+      const std::shared_ptr<apollo::drivers::PointCloud>& out_msg, 
+      const std::shared_ptr<cyber::Writer<apollo::akman::LaserScan>>& laser_scan_writer);
   void Order(std::shared_ptr<apollo::drivers::PointCloud> cloud);
 
  private:
@@ -654,7 +661,8 @@ class LslidarCH16Parser : public LslidarParser {
 
   void GeneratePointcloud(
       const std::shared_ptr<LslidarScan>& scan_msg,
-      const std::shared_ptr<apollo::drivers::PointCloud>& out_msg);
+      const std::shared_ptr<apollo::drivers::PointCloud>& out_msg,
+      const std::shared_ptr<cyber::Writer<apollo::akman::LaserScan>>& laser_scan_writer);
   void Order(std::shared_ptr<apollo::drivers::PointCloud> cloud);
 
  private:
@@ -679,7 +687,8 @@ class LslidarCH32Parser : public LslidarParser {
 
   void GeneratePointcloud(
       const std::shared_ptr<LslidarScan>& scan_msg,
-      const std::shared_ptr<apollo::drivers::PointCloud>& out_msg);
+      const std::shared_ptr<apollo::drivers::PointCloud>& out_msg, 
+      const std::shared_ptr<cyber::Writer<apollo::akman::LaserScan>>& laser_scan_writer);
   void Order(std::shared_ptr<apollo::drivers::PointCloud> cloud);
 
  private:
@@ -704,13 +713,16 @@ class LslidarCH64Parser : public LslidarParser {
 
   void GeneratePointcloud(
       const std::shared_ptr<LslidarScan>& scan_msg,
-      const std::shared_ptr<apollo::drivers::PointCloud>& out_msg);
+      const std::shared_ptr<apollo::drivers::PointCloud>& out_msg,
+      const std::shared_ptr<cyber::Writer<apollo::akman::LaserScan>>& laser_scan_writer);
   void Order(std::shared_ptr<apollo::drivers::PointCloud> cloud);
   void data_processing(unsigned char *packet_bytes, int len); //zhxf 20240731 阿克曼小车 
+  void PubLaserScan(const std::shared_ptr<cyber::Writer<apollo::akman::LaserScan>>& laser_scan_writer);
 
  private:
   void Unpack(int num, const LslidarPacket& pkt,
-              std::shared_ptr<apollo::drivers::PointCloud> pc);
+              std::shared_ptr<apollo::drivers::PointCloud> pc,
+              const std::shared_ptr<cyber::Writer<apollo::akman::LaserScan>>& laser_scan_writer);
 
   // Previous Lslidar packet time stamp. (offset to the top hour)
   double previous_packet_stamp_;
@@ -738,7 +750,8 @@ class LslidarCH64wParser : public LslidarParser {
 
   void GeneratePointcloud(
       const std::shared_ptr<LslidarScan>& scan_msg,
-      const std::shared_ptr<apollo::drivers::PointCloud>& out_msg);
+      const std::shared_ptr<apollo::drivers::PointCloud>& out_msg,
+      const std::shared_ptr<cyber::Writer<apollo::akman::LaserScan>>& laser_scan_writer);
   void Order(std::shared_ptr<apollo::drivers::PointCloud> cloud);
 
  private:
@@ -767,7 +780,8 @@ class LslidarCH120Parser : public LslidarParser {
   ~LslidarCH120Parser() {}
 
   void GeneratePointcloud(const std::shared_ptr<LslidarScan>& scan_msg,
-                          const std::shared_ptr<PointCloud>& out_msg);
+                          const std::shared_ptr<PointCloud>& out_msg,
+                          const std::shared_ptr<cyber::Writer<apollo::akman::LaserScan>>& laser_scan_writer);
   void Order(std::shared_ptr<PointCloud> cloud);
 
  private:
@@ -791,7 +805,8 @@ class LslidarCH128Parser : public LslidarParser {
   ~LslidarCH128Parser() {}
 
   void GeneratePointcloud(const std::shared_ptr<LslidarScan>& scan_msg,
-                          const std::shared_ptr<PointCloud>& out_msg);
+                          const std::shared_ptr<PointCloud>& out_msg,
+                          const std::shared_ptr<cyber::Writer<apollo::akman::LaserScan>>& laser_scan_writer);
   void Order(std::shared_ptr<PointCloud> cloud);
 
  private:
@@ -817,7 +832,8 @@ class LslidarCH128X1Parser : public LslidarParser {
   ~LslidarCH128X1Parser() {}
 
   void GeneratePointcloud(const std::shared_ptr<LslidarScan>& scan_msg,
-                          const std::shared_ptr<PointCloud>& out_msg);
+                          const std::shared_ptr<PointCloud>& out_msg,
+                          const std::shared_ptr<cyber::Writer<apollo::akman::LaserScan>>& laser_scan_writer);
   void Order(std::shared_ptr<PointCloud> cloud);
 
  private:
@@ -840,7 +856,8 @@ class LslidarLS128S2Parser : public LslidarParser {
   ~LslidarLS128S2Parser() {}
 
   void GeneratePointcloud(const std::shared_ptr<LslidarScan>& scan_msg,
-                          const std::shared_ptr<PointCloud>& out_msg);
+                          const std::shared_ptr<PointCloud>& out_msg,
+                          const std::shared_ptr<cyber::Writer<apollo::akman::LaserScan>>& laser_scan_writer);
   void Order(std::shared_ptr<PointCloud> cloud);
 
   int convertCoordinate(const struct Firing_LS128S2& lidardata);

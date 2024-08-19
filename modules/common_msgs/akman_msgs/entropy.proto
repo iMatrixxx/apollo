@@ -1,0 +1,7 @@
+syntax = "proto2";
+
+package apollo.akman;
+
+message Etropy {
+    optional double entropy = 1;
+}

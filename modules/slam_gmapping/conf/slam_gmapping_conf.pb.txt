@@ -1,0 +1,1 @@
+laser_scan_channel_name:"/apollo/sensor/laser_scan"

@@ -1,0 +1,17 @@
+syntax = "proto2";
+
+package apollo.akman;
+
+import "modules/common_msgs/akman_msgs/map_meta_data.proto";
+import "modules/common_msgs/basic_msgs/header.proto";
+import "modules/common_msgs/basic_msgs/geometry.proto";
+
+message PoseStamped {
+    optional apollo.common.Header header = 1;
+    optional apollo.akman.Pose pose = 2;
+}
+
+message PointStamped {
+    optional apollo.common.Header header = 1;
+    optional apollo.common.Point3D point = 2;
+}

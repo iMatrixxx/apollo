@@ -1,0 +1,7 @@
+syntax = "proto2";
+
+package apollo.slam_gmapping;
+
+message SlamGmappingConfig {
+    optional string laser_scan_channel_name = 1;
+}
