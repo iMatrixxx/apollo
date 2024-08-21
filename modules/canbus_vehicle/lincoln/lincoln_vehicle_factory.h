@@ -92,6 +92,17 @@ class LincolnVehicleFactory : public AbstractVehicleFactory {
    */
   void PublishChassisDetail() override;
 
+  bool publish_odometry(Adometry& odometry) override;
+  bool publish_imu_sensor(AkmanImu& akman_imu) override;
+
+  std::string odometry_frame_id_;
+  std::string robot_frame_id_;
+  std::string gyro_frame_id_;
+  Vel_Pos_Data Robot_Pos;    //The position of the robot //机器人的位置
+  cyber::Time _Now, _Last_Time;  //Time dependent, used for integration to find displacement (mileage) //时间相关，用于积分求位移(里程)
+  float Sampling_Time;         //Sampling time, used for integration to find displacement (mileage) //采样时间，用于积分求位移(里程)
+  AkmanQuaternionSolution Robot_Quat;  //The orientation of the robot //机器人的朝向
+
  private:
   /**
    * @brief create Lincoln vehicle controller
@@ -117,6 +128,7 @@ class LincolnVehicleFactory : public AbstractVehicleFactory {
 
   std::shared_ptr<::apollo::cyber::Writer<::apollo::canbus::Lincoln>>
       chassis_detail_writer_;
+
 };
 
 CYBER_REGISTER_VEHICLEFACTORY(LincolnVehicleFactory)

@@ -11,4 +11,7 @@ message CanbusConf {
   optional bool enable_debug_mode = 3 [default = false];
   optional bool enable_receiver_log = 4 [default = false];
   optional bool enable_sender_log = 5 [default = false];
+  optional string odom_frame_id = 6;
+  optional string robot_frame_id = 7;
+  optional string gyro_frame_id = 8;
 }

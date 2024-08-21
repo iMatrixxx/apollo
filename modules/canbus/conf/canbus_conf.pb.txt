@@ -15,3 +15,7 @@ can_card_parameter {
 enable_debug_mode: false
 enable_receiver_log: false
 enable_sender_log: false
+
+odom_frame_id:"odom"
+robot_frame_id:"base_footprint"
+gyro_frame_id:"gyro_link"

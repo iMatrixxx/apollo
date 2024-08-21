@@ -1,8 +1,18 @@
 load("//tools:cpplint.bzl", "cpplint")
-load("//tools:apollo_package.bzl", "apollo_package", "apollo_cc_binary")
+load("//tools:apollo_package.bzl", "apollo_package", "apollo_cc_binary", "apollo_cc_library")
 
 package(default_visibility = ["//visibility:public"])
 
+
+apollo_cc_library(
+    name = "akman_utils_lib",
+    srcs = ["Quaternion_Solution.cpp"],
+    hdrs = ["Quaternion_Solution.h"],
+    deps = [
+        "//modules/common_msgs/basic_msgs:geometry_cc_proto",
+        "//cyber"
+        ],
+)
 
 apollo_cc_binary(
     name = "canbus_tester",

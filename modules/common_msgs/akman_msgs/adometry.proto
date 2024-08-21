@@ -1,0 +1,14 @@
+syntax = "proto2";
+
+package apollo.akman;
+
+import "modules/common_msgs/basic_msgs/header.proto";
+import "modules/common_msgs/akman_msgs/pose_with_covariance.proto";
+import "modules/common_msgs/akman_msgs/twist_with_covariance.proto";
+
+message Adometry {
+    optional apollo.common.Header header = 1;
+    optional string child_frame_id = 2;
+    optional apollo.akman.PoseWithCovariance pose = 3;
+    optional apollo.akman.TwistWithCovariance twist = 4;   
+}

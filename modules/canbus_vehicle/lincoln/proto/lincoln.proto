@@ -29,7 +29,26 @@ message Lincoln {
   optional Surround surround = 17;                     // Surround information
   // Reserve fields for other vehicles
   optional apollo.common.VehicleID vehicle_id = 101;
+
+  optional RobotVel robot_vel = 16;  // robot velocity
+  optional Mpu6050  mpu6050 = 18;
+  optional bool   is_akman102 = 19 [default = false];
+  optional bool   is_akman103 = 20 [default = false];
+  optional bool   is_akman101 = 21 [default = false];
 }
+
+message RobotVel {
+  optional double x = 1;
+  optional double y = 2;
+  optional double z = 3;
+}
+
+message Mpu6050 {
+  optional apollo.common.Quaternion orientation = 1;
+  optional apollo.common.Point3D angular_velocity = 2;
+  optional apollo.common.Point3D linear_acceleration = 3;
+}
+
 
 // CheckResponseSignal
 message CheckResponseSignal {

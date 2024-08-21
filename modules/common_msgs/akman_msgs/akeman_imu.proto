@@ -1,0 +1,27 @@
+syntax = "proto2";
+
+package apollo.akman;
+
+import "modules/common_msgs/basic_msgs/header.proto";
+import "modules/common_msgs/basic_msgs/geometry.proto";
+
+
+// # 这是一个用于保存IMU（惯性测量单元）数据的消息
+// # 加速度应以m/s^2为单位（而不是g），旋转速度应以rad/sec为单位
+// # 如果测量的协方差已知，应填写协方差矩阵（如果你只知道每个测量的方差，例如从数据表中得到的，只需将其放在对角线上）
+// # 一个全零的协方差矩阵将被解释为“协方差未知”，在使用数据时必须假设一个协方差或从其他来源获得
+// # 如果你没有某个数据元素的估计值（例如你的IMU不提供方向估计），请将相关协方差矩阵的第一个元素设为-1
+// # 如果你在解释此消息，请检查每个协方差矩阵的第一个元素是否为-1，并忽略相关的估计值。
+
+message AkmanImu {
+    optional apollo.common.Header header = 1;
+
+    optional apollo.common.Quaternion orientation = 2;
+    repeated double   orientation_covariance = 3;  // Row major about x, y, z axes  [9]
+
+    optional apollo.common.Point3D angular_velocity = 4;
+    repeated double   angular_velocity_covariance = 5;  // Row major about x, y, z axes  [9]
+
+    optional apollo.common.Point3D linear_acceleration = 6;
+    repeated double   linear_acceleration_covariance = 7;  // Row major x, y z [9]
+}

@@ -70,6 +70,7 @@ class AkemanInfo101 : public ::apollo::drivers::canbus::ProtocolData<
 
   double parse_two_frames(const std::uint8_t low_byte,
                           const std::uint8_t high_byte) const;
+  float Odom_Trans(const std::uint8_t Data_High, const std::uint8_t Data_Low) const;
 
   /**
    * @brief check if boo bit from input byte array is 1 or 0 (at position 0)

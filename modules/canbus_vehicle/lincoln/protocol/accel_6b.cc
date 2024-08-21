@@ -32,15 +32,26 @@ const int32_t Accel6b::ID = 0x102; //zhxf 20240725 阿克曼小车
 
 void Accel6b::Parse(const std::uint8_t *bytes, int32_t length,
                     Lincoln *chassis_detail) const {
-  double acc_y = lateral_acceleration(bytes, length) / 1672.0;
-  double acc_x = longitudinal_acceleration(bytes, length) / 1672.0;
-  double acc_z = vertical_acceleration(bytes, length) / 1672.0;
+  // double acc_y = lateral_acceleration(bytes, length) / 1672.0;
+  // double acc_x = longitudinal_acceleration(bytes, length) / 1672.0;
+  // double acc_z = vertical_acceleration(bytes, length) / 1672.0;
+  double acc_x = static_cast<double>(IMU_Trans(bytes[0], bytes[1])) / 1672.0;
+  double acc_y = static_cast<double>(IMU_Trans(bytes[2], bytes[3])) /1672.0;
+  double acc_z = static_cast<double>(IMU_Trans(bytes[4], bytes[5])) /1672.0;
+  double angle_vel_x = static_cast<double>(IMU_Trans(bytes[6], bytes[7])) / 3753.0;
 
-  double angle_vel_x = parse_two_frames(bytes[3], bytes[2]) / 3753.0;
+  //double angle_vel_x = parse_two_frames(bytes[7], bytes[6]) / 3753.0;
 
   chassis_detail->mutable_vehicle_spd()->set_lat_acc(acc_y);
   chassis_detail->mutable_vehicle_spd()->set_long_acc(acc_x);
   chassis_detail->mutable_vehicle_spd()->set_vert_acc(acc_z);
+
+  chassis_detail->mutable_mpu6050()->mutable_linear_acceleration()->set_x(acc_x);
+  chassis_detail->mutable_mpu6050()->mutable_linear_acceleration()->set_y(acc_y);
+  chassis_detail->mutable_mpu6050()->mutable_linear_acceleration()->set_z(acc_z);
+
+  chassis_detail->mutable_mpu6050()->mutable_angular_velocity()->set_x(angle_vel_x);
+  chassis_detail->set_is_akman102(true);
 
   AWARN << "Acc_X "<<acc_x;
   AWARN << "Acc_Y "<<acc_y;
@@ -65,7 +76,7 @@ double Accel6b::longitudinal_acceleration(const std::uint8_t *bytes,
   // return parse_two_frames(bytes[2], bytes[3]); //apollo source code
 
   DCHECK_GE(length, 2);
-  return parse_two_frames(bytes[1], bytes[10]);
+  return parse_two_frames(bytes[1], bytes[0]);
 }
 
 double Accel6b::vertical_acceleration(const std::uint8_t *bytes,
@@ -73,6 +84,14 @@ double Accel6b::vertical_acceleration(const std::uint8_t *bytes,
   DCHECK_GE(length, 6);
   //return parse_two_frames(bytes[4], bytes[5]); //apollo source code
   return parse_two_frames(bytes[5], bytes[4]);
+}
+
+short Accel6b::IMU_Trans(const std::uint8_t Data_High, const std::uint8_t Data_Low) const {
+  short transition_16;
+  transition_16 = 0;
+  transition_16 |=  Data_High<<8;   
+  transition_16 |=  Data_Low;
+  return transition_16;     
 }
 
 double Accel6b::parse_two_frames(const std::uint8_t low_byte,

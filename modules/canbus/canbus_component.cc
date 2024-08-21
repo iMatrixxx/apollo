@@ -35,6 +35,9 @@ using apollo::guardian::GuardianCommand;
 namespace apollo {
 namespace canbus {
 
+static std::atomic<uint64_t> odom_sequence_num = {0};
+static std::atomic<uint64_t> akmanImu_sequence_num = {0};
+
 std::string CanbusComponent::Name() const { return FLAGS_canbus_module_name; }
 
 CanbusComponent::CanbusComponent()
@@ -123,6 +126,10 @@ bool CanbusComponent::Init() {
 
   monitor_logger_buffer_.INFO("Canbus is started.");
 
+  //zhxf add 阿克曼小车
+  odometry_writer_ = node_->CreateWriter<apollo::akman::Adometry>(FLAGS_akman_odometry_topic);
+  akman_imu_writer_ = node_->CreateWriter<apollo::akman::AkmanImu>(FLAGS_akman_imu_rawdata_topic);
+
   return true;
 }
 
@@ -138,8 +145,33 @@ void CanbusComponent::PublishChassis() {
   ADEBUG << chassis.ShortDebugString();
 }
 
+void CanbusComponent::PublishOdometry() {
+  Adometry odom ;
+  if (!vehicle_object_->publish_odometry(odom)) {
+    return;
+  }
+  odom.mutable_header()->set_module_name(node_->Name());
+  odom.mutable_header()->set_sequence_num(
+    static_cast<unsigned int>(odom_sequence_num.fetch_add(1)));
+  odometry_writer_->Write(odom);
+}
+
+void CanbusComponent::PublishImuSensor() {
+  AkmanImu akman_imu;
+  if (!vehicle_object_->publish_imu_sensor(akman_imu)) {
+    return;
+  }
+  akman_imu.mutable_header()->set_module_name(node_->Name());
+  akman_imu.mutable_header()->set_sequence_num(
+    static_cast<unsigned int>(akmanImu_sequence_num.fetch_add(1)));
+  akman_imu_writer_->Write(akman_imu);
+}
+
 bool CanbusComponent::Proc() {
   PublishChassis();
+  PublishOdometry();
+  PublishImuSensor();
+
   if (FLAGS_enable_chassis_detail_pub) {
     vehicle_object_->PublishChassisDetail();
   }

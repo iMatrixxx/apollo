@@ -34,6 +34,7 @@ class Accel103 : public ::apollo::drivers::canbus::ProtocolData<
 
   double parse_two_frames(const std::uint8_t low_byte,
                           const std::uint8_t high_byte) const;
+  short IMU_Trans(const std::uint8_t Data_High, const std::uint8_t Data_Low) const;
 };
 
 }  // namespace lincoln

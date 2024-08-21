@@ -19,7 +19,36 @@
 namespace apollo {
 namespace canbus {
 
+void cpy_odom_pose_covariance(int index, Adometry& odometry) {
+  odometry.mutable_pose()->mutable_covariance()->Reserve(36);
+  if (index == 1) {
+    for (int i = 0; i < 36; i++) {
+      odometry.mutable_pose()->add_covariance(odom_pose_covariance1[i]);
+    }
+  } else {
+    for (int i = 0; i < 36; i++) {
+      odometry.mutable_pose()->add_covariance(odom_pose_covariance2[i]);
+    }
+  }
+}
+
+void cpy_odom_twist_covariance(int index, Adometry& odometry) {
+  odometry.mutable_twist()->mutable_covariance()->Reserve(36);
+  if (index == 1) {
+    for (int i = 0; i < 36; i++) {
+      odometry.mutable_twist()->add_covariance(odom_twist_covariance1[i]);
+    }
+  } else {
+    for (int i = 0; i < 36; i++) {
+      odometry.mutable_twist()->add_covariance(odom_twist_covariance2[i]);
+    }
+  }
+}
+
 void AbstractVehicleFactory::UpdateHeartbeat() {}
+
+bool AbstractVehicleFactory::publish_odometry(Adometry& odometry) {return false;};
+bool AbstractVehicleFactory::publish_imu_sensor(AkmanImu& akman_imu) {return false;};
 
 void AbstractVehicleFactory::SetVehicleParameter(
     const VehicleParameter &vehicle_parameter) {

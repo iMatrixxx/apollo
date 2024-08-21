@@ -273,3 +273,9 @@ DEFINE_string(lidar_model_version, "",
               "if not to set, the model will be loaded by the sensor name.");
 DEFINE_string(record_info_topic, "/apollo/cyber/record_info",
               "record info topic");
+
+DEFINE_string(akman_odometry_topic, "/apollo/akman/sensor/odometry",
+              "akman odometry topic");
+DEFINE_string(akman_imu_rawdata_topic, "/apollo/akman/sensor/imu/data_raw",
+              "akman odometry topic");
+              

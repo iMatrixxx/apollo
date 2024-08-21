@@ -16,15 +16,30 @@ const int32_t Accel103::ID = 0x103; //zhxf 20240725 阿克曼小车
 void Accel103::Parse(const std::uint8_t *bytes, int32_t length,
                     Lincoln *chassis_detail) const {
 
-
-  double angle_vel_y = parse_two_frames(bytes[1], bytes[0]) / 3753.0;
-  double angle_vel_z = parse_two_frames(bytes[3], bytes[2]) / 3753.0;
+  double angle_vel_y = static_cast<double>(IMU_Trans(bytes[0], bytes[1])) / 3753.0;
+  double angle_vel_z = static_cast<double>(IMU_Trans(bytes[2], bytes[3])) / 3753.0;
+  
+  // double angle_vel_y = parse_two_frames(bytes[1], bytes[0]) / 3753.0;
+  // double angle_vel_z = parse_two_frames(bytes[3], bytes[2]) / 3753.0;
   double battery_voltage = parse_two_frames(bytes[5], bytes[4]) / 1000.0;
+
+  chassis_detail->mutable_mpu6050()->mutable_angular_velocity()->set_y(angle_vel_y);
+  chassis_detail->mutable_mpu6050()->mutable_angular_velocity()->set_z(angle_vel_z);
+
+  chassis_detail->set_is_akman103(true);
 
   AWARN << "Angle_Vel_Y "<<angle_vel_y;
   AWARN << "Angle_Vel_Z "<<angle_vel_z;
   AWARN << "Battery_Voltage(V) "<<battery_voltage;
 
+}
+
+short Accel103::IMU_Trans(const std::uint8_t Data_High, const std::uint8_t Data_Low) const {
+  short transition_16;
+  transition_16 = 0;
+  transition_16 |=  Data_High<<8;   
+  transition_16 |=  Data_Low;
+  return transition_16; 
 }
 
 double Accel103::parse_two_frames(const std::uint8_t low_byte,

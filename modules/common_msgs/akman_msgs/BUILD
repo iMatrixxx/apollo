@@ -43,4 +43,42 @@ proto_library(
     ]
 )
 
+
+proto_library(
+    name = "pose_with_covariance_proto",
+    srcs = ["pose_with_covariance.proto"],
+    deps = [
+        ":map_meta_data_proto",
+    ]
+)
+
+proto_library(
+    name = "twist_with_covariance_proto",
+    srcs = ["twist_with_covariance.proto"],
+    deps = [
+        "//modules/common_msgs/basic_msgs:geometry_proto",
+    ]
+)
+
+proto_library(
+    name = "adometry_proto",
+    srcs = ["adometry.proto"],
+    deps = [
+        "//modules/common_msgs/basic_msgs:header_proto",
+        ":pose_with_covariance_proto",
+        ":twist_with_covariance_proto"
+    ]
+)
+
+
+
+proto_library(
+    name = "akeman_imu_proto",
+    srcs = ["akeman_imu.proto"],
+    deps = [
+        "//modules/common_msgs/basic_msgs:geometry_proto",
+        "//modules/common_msgs/basic_msgs:header_proto",
+    ]
+)
+
 apollo_package()

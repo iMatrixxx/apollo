@@ -88,6 +88,13 @@ class CanbusComponent final : public apollo::cyber::TimerComponent {
   apollo::common::Status OnError(const std::string &error_msg);
   void RegisterCanClients();
 
+  //add zhxf 阿克曼
+  void PublishOdometry();
+  void PublishImuSensor();
+
+  std::shared_ptr<cyber::Writer<apollo::akman::Adometry>> odometry_writer_;
+  std::shared_ptr<cyber::Writer<apollo::akman::AkmanImu>> akman_imu_writer_;
+
   CanbusConf canbus_conf_;
   std::shared_ptr<::apollo::canbus::AbstractVehicleFactory> vehicle_object_ =
       nullptr;

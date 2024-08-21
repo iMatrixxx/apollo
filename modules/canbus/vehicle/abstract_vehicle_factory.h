@@ -28,7 +28,18 @@
 #include "modules/canbus/vehicle/vehicle_controller.h"
 #include "modules/drivers/canbus/can_comm/message_manager.h"
 
+//zhxf add 阿克曼小车
+#include "modules/common_msgs/akman_msgs/adometry.pb.h"
+#include "modules/common_msgs/akman_msgs/akeman_imu.pb.h"
+#include "tf2/LinearMath/Quaternion.h"
+#include "modules/canbus/tools/Quaternion_Solution.h"
+
 using apollo::control::ControlCommand;
+
+//--------- zhxf add 阿克曼小车 ------
+using apollo::akman::Adometry;
+using apollo::akman::AkmanImu;
+//-----------------------------------
 
 /**
  * @namespace apollo::canbus
@@ -36,6 +47,44 @@ using apollo::control::ControlCommand;
  */
 namespace apollo {
 namespace canbus {
+
+  const double odom_pose_covariance1[36]   = {1e-3,    0,    0,   0,   0,    0, 
+										      0, 1e-3,    0,   0,   0,    0,
+										      0,    0,  1e6,   0,   0,    0,
+										      0,    0,    0, 1e6,   0,    0,
+										      0,    0,    0,   0, 1e6,    0,
+										      0,    0,    0,   0,   0,  1e3 };
+
+  const double odom_pose_covariance2[36]  = {1e-9,    0,    0,   0,   0,    0, 
+										      0, 1e-3, 1e-9,   0,   0,    0,
+										      0,    0,  1e6,   0,   0,    0,
+										      0,    0,    0, 1e6,   0,    0,
+										      0,    0,    0,   0, 1e6,    0,
+										      0,    0,    0,   0,   0, 1e-9 };
+  const double odom_twist_covariance1[36]  = {1e-3,    0,    0,   0,   0,    0, 
+										      0, 1e-3,    0,   0,   0,    0,
+										      0,    0,  1e6,   0,   0,    0,
+										      0,    0,    0, 1e6,   0,    0,
+										      0,    0,    0,   0, 1e6,    0,
+										      0,    0,    0,   0,   0,  1e3 };
+ const double odom_twist_covariance2[36] = {1e-9,    0,    0,   0,   0,    0, 
+										      0, 1e-3, 1e-9,   0,   0,    0,
+										      0,    0,  1e6,   0,   0,    0,
+										      0,    0,    0, 1e6,   0,    0,
+										      0,    0,    0,   0, 1e6,    0,
+										      0,    0,    0,   0,   0, 1e-9} ;
+
+//Data structure for speed and position
+//速度、位置数据结构体
+typedef struct __Vel_Pos_Data_
+{
+	double X = 0.0;
+	double Y = 0.0;
+	double Z = 0.0;
+}Vel_Pos_Data;
+
+void cpy_odom_pose_covariance(int index, Adometry& odometry);
+void cpy_odom_twist_covariance(int index, Adometry& odometry);
 
 /**
  * @class AbstractVehicleFactory
@@ -92,6 +141,9 @@ class AbstractVehicleFactory {
    * @brief publish chassis for vehicle messages
    */
   virtual void PublishChassisDetail() = 0;
+
+  virtual bool publish_odometry(Adometry& odometry);
+  virtual bool publish_imu_sensor(AkmanImu& akman_imu);
 
   /**
    * @brief create cansender heartbeat
