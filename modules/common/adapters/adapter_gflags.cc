@@ -278,4 +278,11 @@ DEFINE_string(akman_odometry_topic, "/apollo/akman/sensor/odometry",
               "akman odometry topic");
 DEFINE_string(akman_imu_rawdata_topic, "/apollo/akman/sensor/imu/data_raw",
               "akman odometry topic");
+DEFINE_string(akman_gmapping_entropy_topic, "apollo/slam_gmapping/entropy",
+              "akman gmapping entropy topic");
+DEFINE_string(akman_gmapping_map_topic, "apollo/slam_gmapping/map",
+              "akman gmapping map topic");
+DEFINE_string(akman_gmapping_map_meta_data_topic, "apollo/slam_gmapping/map_metadata",
+              "akman gmapping map meta data topic");
+              
               

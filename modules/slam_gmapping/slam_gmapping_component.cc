@@ -94,9 +94,9 @@ bool SlamGmappingComponent::Init() {
 }
 
 void SlamGmappingComponent::startLiveSlam() {
-    entropy_writer_ = node_->CreateWriter<apollo::akman::Etropy>("apollo/slam_gmapping/entropy");
-    sst_writer_     = node_->CreateWriter<apollo::akman::OccupancyGrid>("apollo/slam_gmapping/map");
-    sstm_writer_    = node_->CreateWriter<apollo::akman::MapMetaData>("apollo/slam_gmapping/map_metadata");
+    entropy_writer_ = node_->CreateWriter<apollo::akman::Etropy>(FLAGS_akman_gmapping_entropy_topic);
+    sst_writer_     = node_->CreateWriter<apollo::akman::OccupancyGrid>(FLAGS_akman_gmapping_map_topic);
+    sstm_writer_    = node_->CreateWriter<apollo::akman::MapMetaData>(FLAGS_akman_gmapping_map_meta_data_topic);
     laser_reader_   = node_->CreateReader<apollo::akman::LaserScan>(
             config_.laser_scan_channel_name(), 
             [this](const std::shared_ptr<apollo::akman::LaserScan>& scan) {
@@ -113,6 +113,7 @@ void SlamGmappingComponent::publishTransform() {
     apollo::transform::TransformStamped transform;
     transform.mutable_header()->set_frame_id(map_frame_);
     transform.mutable_header()->set_timestamp_sec(tf_expiration);
+    transform.set_child_frame_id(odom_frame_);
 
     
     transform.mutable_transform()->mutable_translation()->set_x(map_to_odom_.getOrigin().getX());

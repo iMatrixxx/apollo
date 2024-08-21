@@ -150,3 +150,7 @@ DECLARE_string(lidar_model_version);
 //zhxf add 阿克曼小车
 DECLARE_string(akman_odometry_topic);
 DECLARE_string(akman_imu_rawdata_topic);
+DECLARE_string(akman_gmapping_entropy_topic);
+DECLARE_string(akman_gmapping_map_topic);
+DECLARE_string(akman_gmapping_map_meta_data_topic);
+
