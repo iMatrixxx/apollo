@@ -27,9 +27,9 @@ degree_bits_start:5  #起始角度，字节索引
 end_degree_bits_start: 105 #结束角度，字节索引
 package_points:16  #每一帧数据包含的点数
 data_bits_start:7  #点云数据起始字节
-angle_disable_min:0.0
-angle_disable_max:0.0
+angle_disable_min:120.0
+angle_disable_max:230.0
 angle_able_min:0.0
 angle_able_max:360.0
-points_size:16
+points_size:2000
 laser_scan_channel_name:"/apollo/sensor/laser_scan"

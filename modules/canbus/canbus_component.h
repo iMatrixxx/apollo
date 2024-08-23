@@ -40,6 +40,9 @@
 #include "modules/drivers/canbus/can_comm/can_sender.h"
 #include "modules/drivers/canbus/can_comm/message_manager.h"
 
+#include "modules/transform/transform_broadcaster.h"
+#include "modules/common_msgs/transform_msgs/transform.pb.h"
+
 /**
  * @namespace apollo::canbus
  * @brief apollo::canbus
@@ -91,6 +94,9 @@ class CanbusComponent final : public apollo::cyber::TimerComponent {
   //add zhxf 阿克曼
   void PublishOdometry();
   void PublishImuSensor();
+
+  std::shared_ptr<apollo::transform::TransformBroadcaster> tf2_broadcaster1_;
+
 
   std::shared_ptr<cyber::Writer<apollo::akman::Adometry>> odometry_writer_;
   std::shared_ptr<cyber::Writer<apollo::akman::AkmanImu>> akman_imu_writer_;

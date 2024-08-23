@@ -39,3 +39,10 @@ extrinsic_file {
     file_path: "/apollo/modules/perception/data/params/radar_front_extrinsics.yaml"
     enable: true
 }
+
+extrinsic_file {
+    frame_id: "base_footprint"
+    child_frame_id: "lslidarCH64"
+    file_path: "/apollo/modules/transform/params/laser_basefootprint_extrinsics.yaml"
+    enable: true
+}

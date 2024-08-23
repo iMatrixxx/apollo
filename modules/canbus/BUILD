@@ -34,7 +34,8 @@ apollo_cc_library(
         "//modules/common_msgs/akman_msgs:adometry_cc_proto",
         "//modules/common_msgs/akman_msgs:akeman_imu_cc_proto",
         "//third_party/tf2",
-        "//modules/canbus/tools:akman_utils_lib"
+        "//modules/canbus/tools:akman_utils_lib",
+        "//modules/transform:apollo_transform"
     ],
 )
 

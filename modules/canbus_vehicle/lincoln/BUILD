@@ -80,6 +80,7 @@ apollo_cc_library(
         "//modules/common_msgs/chassis_msgs:chassis_cc_proto",
         "//modules/drivers/canbus:apollo_drivers_canbus",
         "@com_google_googletest//:gtest",
+        
     ],
 )
 

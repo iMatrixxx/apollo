@@ -35,6 +35,8 @@
 #include "modules/drivers/canbus/can_comm/can_sender.h"
 #include "modules/drivers/canbus/can_comm/message_manager.h"
 
+
+
 /**
  * @namespace apollo::canbus
  * @brief apollo::canbus
@@ -102,6 +104,7 @@ class LincolnVehicleFactory : public AbstractVehicleFactory {
   cyber::Time _Now, _Last_Time;  //Time dependent, used for integration to find displacement (mileage) //时间相关，用于积分求位移(里程)
   float Sampling_Time;         //Sampling time, used for integration to find displacement (mileage) //采样时间，用于积分求位移(里程)
   AkmanQuaternionSolution Robot_Quat;  //The orientation of the robot //机器人的朝向
+  
 
  private:
   /**

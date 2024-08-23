@@ -129,6 +129,8 @@ bool CanbusComponent::Init() {
   //zhxf add 阿克曼小车
   odometry_writer_ = node_->CreateWriter<apollo::akman::Adometry>(FLAGS_akman_odometry_topic);
   akman_imu_writer_ = node_->CreateWriter<apollo::akman::AkmanImu>(FLAGS_akman_imu_rawdata_topic);
+  tf2_broadcaster1_.reset(new apollo::transform::TransformBroadcaster(node_));
+
 
   return true;
 }
@@ -153,6 +155,21 @@ void CanbusComponent::PublishOdometry() {
   odom.mutable_header()->set_module_name(node_->Name());
   odom.mutable_header()->set_sequence_num(
     static_cast<unsigned int>(odom_sequence_num.fetch_add(1)));
+  apollo::transform::TransformStamped base2odom_tf;
+  
+
+  base2odom_tf.mutable_header()->set_frame_id(odom.header().frame_id());
+  base2odom_tf.set_child_frame_id(odom.child_frame_id());
+  base2odom_tf.mutable_header()->set_timestamp_sec(odom.header().timestamp_sec());
+  base2odom_tf.mutable_transform()->mutable_translation()->set_x(odom.pose().pose().position().x());
+  base2odom_tf.mutable_transform()->mutable_translation()->set_y(odom.pose().pose().position().y());
+  base2odom_tf.mutable_transform()->mutable_translation()->set_z(odom.pose().pose().position().z());
+  base2odom_tf.mutable_transform()->mutable_rotation()->set_qw(odom.pose().pose().orientation().qw());
+  base2odom_tf.mutable_transform()->mutable_rotation()->set_qx(odom.pose().pose().orientation().qx());
+  base2odom_tf.mutable_transform()->mutable_rotation()->set_qy(odom.pose().pose().orientation().qy());
+  base2odom_tf.mutable_transform()->mutable_rotation()->set_qz(odom.pose().pose().orientation().qz());
+  tf2_broadcaster1_->SendTransform(base2odom_tf);
+  
   odometry_writer_->Write(odom);
 }
 

@@ -718,11 +718,12 @@ class LslidarCH64Parser : public LslidarParser {
   void Order(std::shared_ptr<apollo::drivers::PointCloud> cloud);
   void data_processing(unsigned char *packet_bytes, int len); //zhxf 20240731 阿克曼小车 
   void PubLaserScan(const std::shared_ptr<cyber::Writer<apollo::akman::LaserScan>>& laser_scan_writer);
-
+  void AddPointClouds(std::shared_ptr<PointCloud>& pc);
  private:
   void Unpack(int num, const LslidarPacket& pkt,
               std::shared_ptr<apollo::drivers::PointCloud> pc,
               const std::shared_ptr<cyber::Writer<apollo::akman::LaserScan>>& laser_scan_writer);
+
 
   // Previous Lslidar packet time stamp. (offset to the top hour)
   double previous_packet_stamp_;

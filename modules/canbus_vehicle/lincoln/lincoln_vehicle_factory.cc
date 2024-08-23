@@ -88,7 +88,6 @@ bool LincolnVehicleFactory::Init(const CanbusConf *canbus_conf) {
   odometry_frame_id_ = canbus_conf->odom_frame_id();
   robot_frame_id_ = canbus_conf->robot_frame_id();
   
-
   return true;
 }
 

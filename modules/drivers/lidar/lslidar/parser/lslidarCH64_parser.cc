@@ -22,7 +22,7 @@ namespace lslidar {
 
 LslidarCH64Parser::LslidarCH64Parser(const Config& config)
     : LslidarParser(config), previous_packet_stamp_(0), gps_base_usec_(0) {
-      scan_points_.resize(50);
+      scan_points_.resize(6000);
 }
 
 //产生点云数据
@@ -85,70 +85,15 @@ void LslidarCH64Parser::Unpack(int num, const LslidarPacket& pkt,
   data_processing(data, 6);
   if (count_num != 0) {
     PubLaserScan(laser_scan_writer);
+    AddPointClouds(pc);
+    count_num = 0;
+    // for (long unsigned int k = 0; k < scan_points_.size(); k++)
+    // {
+    //   scan_points_[k].range = 0;
+    //   scan_points_[k].degree = 0;
+    //   scan_points_[k].intensity = 0;
+    // }
   }
-  
-  pc->mutable_header()->set_timestamp_sec(apollo::cyber::Time().Now().ToSecond());
-  pc->set_frame_id(config_.frame_id());
-  pc->set_height(1);
-  double timestamp = pre_time_.ToSecond();
-  double scan_time = time_.ToSecond() - pre_time_.ToSecond();
-  int width = 0;
-  for (uint16_t i = 0; i < count_num; i++) {
-    double degree = 360.0 - scan_points_[i].degree;
-    bool pass_point = false;
-    if (config_.angle_able_max() < 360) {
-      if (degree < config_.angle_able_min() || degree > config_.angle_able_max()) {
-				pass_point = true;
-      }
-    } else {
-      if (degree < config_.angle_able_min() && degree > (config_.angle_able_max() - 360)) {
-				pass_point = true;
-      }
-    }
-
-    if (scan_points_[i].range < 0.001) {
-        pass_point = true;
-    }
-    if (!pass_point)
-    {
-      // printf("degree = %f\n",degree);
-      // printf("angle_able_min = %f\nangle_able_max=%f\n",angle_able_min,angle_able_max);
-      PointXYZIT* point = pc->add_point();
-      int point_idx = round(degree * count_num / 360);
-      point->set_timestamp(timestamp - point_idx * (scan_time / count_num));
-      // printf("timestamp = %f\n",point.timestamp);
-      point->set_x(scan_points_[i].range * cos(M_PI / 180 * scan_points_[i].degree));
-      point->set_y(-scan_points_[i].range * sin(M_PI / 180 * scan_points_[i].degree));
-      point->set_z(0);
-      point->set_intensity(scan_points_[i].intensity);
-      ++width;
-    }
-    if (scan_points_[i + 25].range < 0.001)
-      pass_point = true;
-    if (!pass_point)
-    {
-      // printf("degree = %f\n",degree);
-      // printf("angle_able_min = %f\nangle_able_max=%f\n",angle_able_min,angle_able_max);
-      PointXYZIT* point = pc->add_point();
-      int point_idx = round(degree * count_num / 360);
-      point->set_timestamp(timestamp - point_idx * (scan_time / count_num));
-      // printf("timestamp = %f\n",point.timestamp);
-      point->set_x(scan_points_[i + 25].range * cos(M_PI / 180 * scan_points_[i].degree));
-      point->set_y(-scan_points_[i + 25].range * sin(M_PI / 180 * scan_points_[i].degree));
-      point->set_z(0);
-      point->set_intensity(scan_points_[i + 25].intensity);
-      ++width;
-    }
-  }
-  pc->set_width(width);
-  count_num = 0;
-  for (long unsigned int k = 0; k < scan_points_.size(); k++)
-  {
-    scan_points_[k].range = 0;
-    scan_points_[k].degree = 0;
-    scan_points_[k].intensity = 0;
-  }
-
   
   // for (size_t point_idx = 0; point_idx < POINTS_PER_PACKET; point_idx++) {
   //   firings[point_idx].vertical_line = raw->points[point_idx].vertical_line;
@@ -237,6 +182,63 @@ void LslidarCH64Parser::Unpack(int num, const LslidarPacket& pkt,
   // }
 }
 
+void LslidarCH64Parser::AddPointClouds(std::shared_ptr<PointCloud>& pc) {
+  // pc->mutable_header()->set_timestamp_sec(apollo::cyber::Time().Now().ToSecond());
+  // pc->set_frame_id(config_.frame_id());
+  // pc->set_height(1);
+  double timestamp = pre_time_.ToSecond();
+  double scan_time = time_.ToSecond() - pre_time_.ToSecond();
+  int width = 0;
+  for (uint16_t i = 0; i < count_num; i++) {
+    double degree = 360.0 - scan_points_[i].degree;
+    bool pass_point = false;
+    if (config_.angle_able_max() < 360) {
+      if (degree < config_.angle_able_min() || degree > config_.angle_able_max()) {
+				pass_point = true;
+      }
+    } else {
+      if (degree < config_.angle_able_min() && degree > (config_.angle_able_max() - 360)) {
+				pass_point = true;
+      }
+    }
+
+    if (scan_points_[i].range < 0.001) {
+        pass_point = true;
+    }
+    if (!pass_point)
+    {
+      // printf("degree = %f\n",degree);
+      // printf("angle_able_min = %f\nangle_able_max=%f\n",angle_able_min,angle_able_max);
+      PointXYZIT* point = pc->add_point();
+      int point_idx = round(degree * count_num / 360);
+      point->set_timestamp(timestamp - point_idx * (scan_time / count_num));
+      // printf("timestamp = %f\n",point.timestamp);
+      point->set_x(scan_points_[i].range * cos(M_PI / 180 * scan_points_[i].degree));
+      point->set_y(-scan_points_[i].range * sin(M_PI / 180 * scan_points_[i].degree));
+      point->set_z(0);
+      point->set_intensity(scan_points_[i].intensity);
+      ++width;
+    }
+    if (scan_points_[i + 3000].range < 0.001)
+      pass_point = true;
+    if (!pass_point)
+    {
+      // printf("degree = %f\n",degree);
+      // printf("angle_able_min = %f\nangle_able_max=%f\n",angle_able_min,angle_able_max);
+      PointXYZIT* point = pc->add_point();
+      int point_idx = round(degree * count_num / 360);
+      point->set_timestamp(timestamp - point_idx * (scan_time / count_num));
+      // printf("timestamp = %f\n",point.timestamp);
+      point->set_x(scan_points_[i + 3000].range * cos(M_PI / 180 * scan_points_[i].degree));
+      point->set_y(-scan_points_[i + 3000].range * sin(M_PI / 180 * scan_points_[i].degree));
+      point->set_z(0);
+      point->set_intensity(scan_points_[i + 3000].intensity);
+      ++width;
+    }
+  }
+  pc->set_width(width);
+}
+
 void LslidarCH64Parser::PubLaserScan(
   const std::shared_ptr<cyber::Writer<apollo::akman::LaserScan>>& laser_scan_writer) {
 
@@ -249,7 +251,6 @@ void LslidarCH64Parser::PubLaserScan(
 
   scan.mutable_header()->set_timestamp_sec(apollo::cyber::Time::Now().ToSecond()); // timestamp will obtained from sweep data stamp
   
-
   scan.set_angle_min(0);
   scan.set_angle_max(2 * M_PI);
   scan.set_angle_increment(2 * M_PI / (double)(count_num));
@@ -264,26 +265,22 @@ void LslidarCH64Parser::PubLaserScan(
 
   for (int k = 0; k < scan_num; k++)
   {
-    scan.add_ranges(std::numeric_limits<float>::infinity());
-    // temp_ranges[k] = std::numeric_limits<float>::infinity();
-    // temp_intensities[k] = 0.0;
-    scan.add_ranges(0);
+    //scan.add_ranges(std::numeric_limits<float>::infinity());
+    temp_ranges[k] = std::numeric_limits<float>::infinity();
+    temp_intensities[k] = 0.0;
+    //scan.add_ranges(0);
   }
-
-
 
   for (int i = 0; i < count_num; i++)
   {
-    int point_idx = round((360 - scan_points_[i].degree) * count_num / 360);
-    AERROR << "point_idx: "<<point_idx << "count_num: "<<count_num;
+    int point_idx = round((360 - scan_points_[i].degree) * (count_num-1) / 360);
+    AINFO << "count_num "<< count_num;
+    AINFO << "debug_pub_scan "<< "scan_points["<<i<<"] range: "<< scan_points_[i].range << " intensity:"<<scan_points_[i].intensity;
+    AINFO << "debug_pub_scan "<< "scan_points["<<i<<"] degree: "<< scan_points_[i].degree << "point_idx: "<<point_idx;
     if (scan_points_[i].range == 0.0)
     {
       temp_ranges[point_idx] = std::numeric_limits<float>::infinity();
       temp_intensities[point_idx] = 0.0;
-      // scan.mutable_ranges()->Set(point_idx, std::numeric_limits<float>::infinity());
-      // scan.mutable_intensities()->Set(point_idx, 0.0);
-      // scan.set_ranges(point_idx, std::numeric_limits<float>::infinity());
-      // scan.set_intensities(point_idx, 0.0)
 
     }
     else
@@ -292,8 +289,6 @@ void LslidarCH64Parser::PubLaserScan(
 
       temp_ranges[point_idx] = (float)dist;
       temp_intensities[point_idx] = scan_points_[i].intensity;
-      // scan.mutable_ranges()->Set(point_idx, (float)dist);
-      // scan.mutable_intensities()->Set(point_idx, scan_points_[i].intensity);
 
     }
   }
@@ -301,6 +296,8 @@ void LslidarCH64Parser::PubLaserScan(
   for (int i = 0; i < count_num; i++) {
     scan.add_ranges(temp_ranges[i]);
     scan.add_intensities(temp_intensities[i]);
+    AINFO << "debug_pub_scan "<<"temp_ranges["<<i<<"] "<< temp_ranges[i] << " temp_intensities["<<i<<"] "<<temp_intensities[i];
+    AINFO << "debug_pub_scan "<<"scan.add_ranges["<<i<<"] "<< scan.ranges(i) << " scan.add_intensities["<<i<<"] "<<scan.intensities(i);
   }
   laser_scan_writer->Write(scan);
 }
@@ -369,9 +366,8 @@ void LslidarCH64Parser::data_processing(
 				
 				y = packet_bytes[num * point_len + config_.data_bits_start() + point_len / 2 + 2];
 
-				scan_points_[idx + 25].range = double(s * 256 + (z)) / 1000.f;
-				scan_points_[idx + 25].intensity = int(y);
-        AWARN<<"------- "<<idx+25<<"   range: "<<double(s * 256 + (z)) / 1000.f<<" intensity:"<<int(y);
+				scan_points_[idx + 3000].range = double(s * 256 + (z)) / 1000.f;
+				scan_points_[idx + 3000].intensity = int(y);
 				//计算每个点的角度
 				if ((degree + (degree_interval / invalidValue * num)) > 360)
 					scan_points_[idx].degree = degree + (degree_interval / invalidValue * num) - 360;
@@ -380,14 +376,23 @@ void LslidarCH64Parser::data_processing(
 			} else {
 				continue;
       }
-      AWARN << "scan_points_["<<idx<<"] "<<scan_points_[idx].degree<< "last_degree"<<last_degree;
-      AWARN << "idx "<<idx<< "points_size "<<config_.points_size();
+
+      AINFO << "debug idx scan_points_["<<idx<<"] "<<scan_points_[idx].range << " intensity:"<<scan_points_[idx].intensity;
+
+      AWARN << "scan_points_["<<idx<<"] "<<scan_points_[idx].degree<< " last_degree "<<last_degree;
+      AWARN << "idx "<<idx<< " points_size "<<config_.points_size();
 			if (((scan_points_[idx].degree < last_degree && scan_points_[idx].degree < 5 && last_degree > 355) || idx >= config_.points_size()) && idx > 10)
 			{
         
 				last_degree = scan_points_[idx].degree;
 				count_num = idx;
 				idx = 0;
+        AINFO << "debug min_range: "<< config_.min_range() <<" max_range: "<<config_.max_range();
+        for (int k = 0; k < count_num; k++) {
+          AINFO << "debug scan_points["<<k <<"]:"<<" range: "<<scan_points_[k].range << " intensity:"<<scan_points_[k].intensity;
+          AINFO << "debug scan_points["<<k +3000 <<"]:"<<" range: "<<scan_points_[k+3000].range << " intensity:"<<scan_points_[k+3000].intensity;
+        }
+
 				for (int k = 0; k < count_num; k++)
 				{
 					if (config_.angle_able_max() > 360)
@@ -395,7 +400,7 @@ void LslidarCH64Parser::data_processing(
 						if ((360 - scan_points_[k].degree) > (config_.angle_able_max() - 360) && (360 - scan_points_[k].degree) < config_.angle_able_min())
 						{
 							scan_points_[k].range = 0;
-							scan_points_[k + 25].range = 0;
+							scan_points_[k + 3000].range = 0;
 						}
 					}
 					else
@@ -403,13 +408,17 @@ void LslidarCH64Parser::data_processing(
 						if ((360 - scan_points_[k].degree) > config_.angle_able_max() || (360 - scan_points_[k].degree) < config_.angle_able_min())
 						{
 							scan_points_[k].range = 0;
-							scan_points_[k + 25].range = 0;
+							scan_points_[k + 3000].range = 0;
+
 						}
 					}
-					if (scan_points_[k].range < config_.min_range() || scan_points_[k].range > config_.max_range())
-						scan_points_[k].range = 0;
-					if (scan_points_[k + 25].range < config_.min_range() || scan_points_[k + 25].range > config_.max_range())
-						scan_points_[k + 25].range = 0;
+          
+					if (scan_points_[k].range < config_.min_range() || scan_points_[k].range > config_.max_range()) {
+            scan_points_[k].range = 0;
+          }
+					if (scan_points_[k + 3000].range < config_.min_range() || scan_points_[k + 3000].range > config_.max_range()) {
+            scan_points_[k + 3000].range = 0;
+          }
 				}
 				
 				pre_time_ = time_;
@@ -419,12 +428,12 @@ void LslidarCH64Parser::data_processing(
 				idx++;
 			}
 		}
-		packet_bytes = {0x00};
-		if (packet_bytes)
-		{
-			packet_bytes = NULL;
-			delete packet_bytes;
-		}
+		// packet_bytes = {0x00};
+		// if (packet_bytes)
+		// {
+		// 	packet_bytes = NULL;
+		// 	delete packet_bytes;
+		// }
 	}
 
 void LslidarCH64Parser::Order(std::shared_ptr<PointCloud> cloud) {}

@@ -38,10 +38,22 @@ case $module_name in
     echo "Open Lslidar N10_P..."
     mainboard -d /apollo/modules/drivers/lidar/lslidar/dag/lslidarCH64.dag
     ;;
+    gmapping)
+    echo "Run SlamGmapping ..."
+    mainboard -d modules/slam_gmapping/dag/slam_gmapping.dag
+    ;;
+    static_tf)
+    echo "Run static transform ..."
+    cyber_launch start modules/transform/launch/static_transform.launch
+    ;;
+    test)
+    echo "Run lidar and canbus ..."
+    mainboard -d modules/slam_gmapping/dag/run_lidar_and_canbus.dag
+    ;;
     *)
-        echo "Error: Unknown module '$module_name'"
-        exit 2
-        ;;
+    echo "Error: Unknown module '$module_name'"
+    exit 2
+    ;;
 esac
 
 echo "Operation completed."
