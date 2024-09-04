@@ -1,0 +1,17 @@
+syntax = "proto2";
+
+package apollo.modules.air_map_server.save_msg.proto;
+
+message save_request {
+    optional string map_topic = 1;
+    optional string save_path = 2;
+    optional string img_format = 3;  //"pgm,  png,  bmp"
+    optional string map_mode = 4;    //"trinary(occupied free unknown) ,scaled  ,raw  "
+    optional double free_thresh = 5;
+    optional double occupied_thresh = 6;
+}
+
+message save_response {
+    optional bool result = 1;
+}
+

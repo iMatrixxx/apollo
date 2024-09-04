@@ -28,7 +28,6 @@
 #include "modules/common_msgs/akman_msgs/entropy.pb.h"
 #include "modules/common_msgs/akman_msgs/occupancy_grid.pb.h"
 #include "modules/common_msgs/akman_msgs/map_meta_data.pb.h"
-// #include "modules/drivers/lidar/lslidar/proto/lslidar.pb.h"
 #include "modules/common_msgs/akman_msgs/pose_stamped.pb.h"
 #include "modules/common_msgs/akman_msgs/laser_scan.pb.h"
 #include "modules/common_msgs/monitor_msgs/monitor_log.pb.h"
@@ -39,6 +38,13 @@
 #include "modules/slam_gmapping/openslam_gmapping/include/sensor/sensor_range/rangesensor.h"
 #include "modules/slam_gmapping/openslam_gmapping/include/sensor/sensor_odometry/odometrysensor.h"
 #include "modules/transform/transform_broadcaster.h"
+
+#include "cyber/class_loader/class_loader.h"
+#include "cyber/common/file.h"
+#include "cyber/time/time.h"
+#include "modules/common/adapters/adapter_gflags.h"
+#include "modules/common/util/util.h"
+#include "modules/slam_gmapping/common/slam_gmapping_gflags.h"
 
 namespace apollo {
 namespace slamg_mapping {

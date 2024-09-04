@@ -1,0 +1,6 @@
+module_config {
+    module_library : "bazel-bin/modules/air_viz/lib_air_viz.so"
+    components {
+        class_name : "VizComponent"
+    }
+}

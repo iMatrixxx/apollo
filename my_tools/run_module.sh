@@ -50,6 +50,14 @@ case $module_name in
     echo "Run lidar and canbus ..."
     mainboard -d modules/slam_gmapping/dag/run_lidar_and_canbus.dag
     ;;
+    savemap)
+    echo "Run Save Map ..."
+    mainboard -d modules/air_map_server/dag/map_saver.dag
+    ;;
+    viz)
+    echo "Run viz ..."
+    mainboard -d modules/air_viz/dag/viz.dag
+    ;;
     *)
     echo "Error: Unknown module '$module_name'"
     exit 2

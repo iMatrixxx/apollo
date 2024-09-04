@@ -1,12 +1,7 @@
 
 #include "modules/slam_gmapping/slam_gmapping_component.h"
 
-#include "cyber/class_loader/class_loader.h"
-#include "cyber/common/file.h"
-#include "cyber/time/time.h"
-#include "modules/common/adapters/adapter_gflags.h"
-#include "modules/common/util/util.h"
-#include "modules/slam_gmapping/common/slam_gmapping_gflags.h"
+
 
 
 using apollo::common::ErrorCode;
@@ -54,7 +49,7 @@ bool SlamGmappingComponent::Init() {
     throttle_scans_ = 1;
     base_frame_ = "base_footprint";//base_link
     map_frame_ = "map";
-    odom_frame_ = "odom_combined";
+    odom_frame_ = "odom";
     transform_publish_period_ = 0.05;
 
     map_update_interval_ = 0.5;
@@ -132,8 +127,8 @@ void SlamGmappingComponent::publishTransform() {
 
 }
 
-bool SlamGmappingComponent::initMapper(const apollo::akman::LaserScan& scan)
-{
+bool SlamGmappingComponent::initMapper(const apollo::akman::LaserScan& scan) {
+    AINFO << "initMapper Start -------------------------------------";
     laser_frame_ = scan.header().frame_id();
     // Get the laser's pose, relative to base.
     apollo::akman::PoseStamped ident; //雷达初始位姿 
@@ -143,37 +138,18 @@ bool SlamGmappingComponent::initMapper(const apollo::akman::LaserScan& scan)
     StampedTransform trans;
     auto query_time = apollo::cyber::Time(0);
     try {
-    stamped_transform =
-        tf2_buffer_->lookupTransform(base_frame_, scan.header().frame_id(), query_time);
 
-    // trans.translation =
-    //     Eigen::Translation3d(stamped_transform.transform().translation().x(),
-    //                             stamped_transform.transform().translation().y(),
-    //                             stamped_transform.transform().translation().z());
-    // trans.rotation =
-    //     Eigen::Quaterniond(stamped_transform.transform().rotation().qw(),
-    //                         stamped_transform.transform().rotation().qx(),
-    //                         stamped_transform.transform().rotation().qy(),
-    //                         stamped_transform.transform().rotation().qz());
+        AWARN << "laser frame: " << scan.header().frame_id();
+        stamped_transform = 
+            tf2_buffer_->lookupTransform(base_frame_, scan.header().frame_id(), query_time);
 
-    //to do transform   ident  坐标系转换; laser_frame_ --> base_frame_
-    TransformPoseStamped(ident, laser_pose, stamped_transform);
+        //to do transform   ident  坐标系转换; laser_frame_ --> base_frame_
+        TransformPoseStamped(ident, laser_pose, stamped_transform);
 
     } catch (tf2::TransformException& ex) {
-    AERROR << ex.what();
-    return false;
+        AERROR << ex.what();
+        return false;
     }
-
-    // try{
-    //     ident.mutable_header()->set_frame_id(laser_frame_);
-    //     ident.mutable_header()->set_timestamp_sec(scan.header().timestamp_sec());
-
-    //     buffer_->transform(ident, laser_pose, base_frame_); //坐标系转换; laser_frame_ --> base_frame_
-    // }
-    // catch (tf2::TransformException& e){
-    //     RCLCPP_WARN(this->get_logger(), "Failed to compute laser pose, aborting initialization (%s)", e.what());
-    //     return false;
-    // }
 
     // create a point 1m above the laser position and transform it into the laser-frame
     apollo::akman::PointStamped up;
@@ -183,23 +159,13 @@ bool SlamGmappingComponent::initMapper(const apollo::akman::LaserScan& scan)
     up.mutable_point()->set_y(0);
     up.mutable_point()->set_z(1 + laser_pose.pose().position().z());
 
-    // geometry_msgs::msg::PointStamped up;
-    // up.header.stamp = scan->header.stamp;
-    // up.header.frame_id = base_frame_;
-    // up.point.x = up.point.y = 0;
-    // up.point.z = 1 + laser_pose.pose.position.z;
-    try
-    {
+    try {
         stamped_transform =
-            tf2_buffer_->lookupTransform(scan.header().frame_id(),base_frame_, query_time);
+            tf2_buffer_->lookupTransform(scan.header().frame_id(), base_frame_, query_time);
 
         //todo   坐标系转换; base_frame_ --> laser_frame_
         TransformPointStamped(up, up, stamped_transform);
-
-        //buffer_->transform(up, up, laser_frame_); //坐标系转换; base_frame_ --> laser_frame_
-    }
-    catch(tf2::TransformException& e)
-    {
+    } catch(tf2::TransformException& e) {
         AERROR << "Unable to determine orientation of laser: %s"<<e.what();
         return false;
     }
@@ -211,8 +177,8 @@ bool SlamGmappingComponent::initMapper(const apollo::akman::LaserScan& scan)
         return false;
     }
 
-    gsp_laser_beam_count_ = static_cast<unsigned int>(scan.ranges().size());
-
+    //gsp_laser_beam_count_ = static_cast<unsigned int>(scan.ranges().size());
+    gsp_laser_beam_count_ = 528;
     double angle_center = (scan.angle_min() + scan.angle_max())/2; //激光扫描中心角度
 
     centered_laser_pose_.mutable_header()->set_frame_id(laser_frame_);
@@ -311,7 +277,7 @@ bool SlamGmappingComponent::initMapper(const apollo::akman::LaserScan& scan)
     // Call the sampling function once to set the seed.
     GMapping::sampleGaussian(1, static_cast<unsigned int>(seed_));
 
-    AINFO << "Initialization complete";
+    AINFO << "Initialization complete --------------------------------";
 
     return true;
 }
@@ -319,8 +285,8 @@ bool SlamGmappingComponent::initMapper(const apollo::akman::LaserScan& scan)
 
 
 
-double SlamGmappingComponent::computePoseEntropy()
-{
+double SlamGmappingComponent::computePoseEntropy() {
+    AINFO << "computePoseEntropy Start ------------------------";
     double weight_total=0.0;
     for (const auto &it : gsp_->getParticles()) {
         weight_total += it.weight;
@@ -330,11 +296,13 @@ double SlamGmappingComponent::computePoseEntropy()
         if(it.weight/weight_total > 0.0)
             entropy += it.weight/weight_total * std::log(it.weight/weight_total);
     }
+    AINFO << "computePoseEntropy End:"<< -entropy;
     return -entropy;
 }
 
-bool SlamGmappingComponent::getOdomPose(GMapping::OrientedPoint& gmap_pose, const double& t)
-{
+bool SlamGmappingComponent::getOdomPose(GMapping::OrientedPoint& gmap_pose, const double& t) {
+
+    AINFO << "getOdomPose Start -----------------------";
     // Get the pose of the centered laser at the right time
     centered_laser_pose_.mutable_header()->set_timestamp_sec(t);
     // Get the laser's pose that is centered
@@ -342,29 +310,23 @@ bool SlamGmappingComponent::getOdomPose(GMapping::OrientedPoint& gmap_pose, cons
 
     apollo::transform::TransformStamped stamped_transform;
     StampedTransform trans;
-    auto query_time = apollo::cyber::Time(1.0);
+    auto query_time = apollo::cyber::Time(0);
     try {
-    stamped_transform =
-        tf2_buffer_->lookupTransform(odom_frame_, centered_laser_pose_.header().frame_id(), query_time);
-    TransformPoseStamped(centered_laser_pose_, odom_pose, stamped_transform);
+        stamped_transform =
+            tf2_buffer_->lookupTransform(odom_frame_, centered_laser_pose_.header().frame_id(), query_time);
+        AWARN << "laser frame: " << centered_laser_pose_.header().frame_id();
+        AWARN << "odom frame: " << odom_frame_;
+        AWARN << "debug stamped_transform:------------------------------------------";
+        AWARN << "translation x: " << stamped_transform.transform().translation().x();
+        AWARN << "translation y: " << stamped_transform.transform().translation().y();
+        AWARN << "translation z: " << stamped_transform.transform().translation().z();
+        AWARN << "rotation x: " << stamped_transform.transform().rotation().qx();
+        AWARN << "rotation y: " << stamped_transform.transform().rotation().qy();
+        AWARN << "rotation z: " << stamped_transform.transform().rotation().qz();
+        AWARN << "rotation w: " << stamped_transform.transform().rotation().qw();
+        TransformPoseStamped(centered_laser_pose_, odom_pose, stamped_transform);
 
-    // trans.translation =
-    //     Eigen::Translation3d(stamped_transform.transform().translation().x(),
-    //                             stamped_transform.transform().translation().y(),
-    //                             stamped_transform.transform().translation().z());
-    // trans.rotation =
-    //     Eigen::Quaterniond(stamped_transform.transform().rotation().qw(),
-    //                         stamped_transform.transform().rotation().qx(),
-    //                         stamped_transform.transform().rotation().qy(),
-    //                         stamped_transform.transform().rotation().qz());
-    }
-   // geometry_msgs::msg::PoseStamped odom_pose;
-    // try
-    // {
-    //     buffer_->transform(centered_laser_pose_, odom_pose, odom_frame_, tf2::durationFromSec(1.0));
-    // }
-    catch(tf2::TransformException& e)
-    {
+    } catch(tf2::TransformException& e) {
         AWARN << "Failed to compute odom pose, skipping scan (%s)", e.what();
         return false;
     }
@@ -375,6 +337,7 @@ bool SlamGmappingComponent::getOdomPose(GMapping::OrientedPoint& gmap_pose, cons
     gmap_pose = GMapping::OrientedPoint(odom_pose.pose().position().x(),
                                         odom_pose.pose().position().y(),
                                         yaw);
+    AINFO << "getOdomPose End -----------------------";
     return true;
 }
 
@@ -383,18 +346,28 @@ bool SlamGmappingComponent::getOdomPose(GMapping::OrientedPoint& gmap_pose, cons
 bool SlamGmappingComponent::addScan(
     const std::shared_ptr<apollo::akman::LaserScan>& scan, 
     GMapping::OrientedPoint& gmap_pose) {
-    if (!getOdomPose(gmap_pose, scan->header().timestamp_sec()))
+    AWARN << "addScan start ---------------------------------------";
+    if (!getOdomPose(gmap_pose, scan->header().timestamp_sec())) {
+        AERROR << "addScan  getOdomPose false---------------------------------------";
         return false;
+    }
 
-    if (scan->ranges().size() != gsp_laser_beam_count_)
+    if (scan->ranges().size() < gsp_laser_beam_count_) {
+        AERROR << "addScan return false 1: ";
+        AERROR << "scan_rangs_size "<<scan->ranges().size();
+        AERROR << "gsp_laser_beam_count_ " << gsp_laser_beam_count_;
+        AINFO << "debug_slam err_rangsize "<< gsp_laser_beam_count_ - scan->ranges().size();
         return false;
+    }
 
     // GMapping wants an array of doubles...
-    auto *ranges_double = new double[scan->ranges().size()];
+    //auto *ranges_double = new double[scan->ranges().size()];
+    auto *ranges_double = new double[gsp_laser_beam_count_];
     // If the angle increment is negative, we have to invert the order of the readings.
     if (do_reverse_range_) {
         ADEBUG << "Inverting scan";
-        int num_ranges = static_cast<int>(scan->ranges().size());
+        //int num_ranges = static_cast<int>(scan->ranges().size());
+        int num_ranges = static_cast<int>(gsp_laser_beam_count_);
         for (int i = 0; i < num_ranges; i++) {
             // Must filter out short readings, because the mapper won't
             if (scan->ranges(num_ranges - i - 1) < scan->range_min())
@@ -403,7 +376,8 @@ bool SlamGmappingComponent::addScan(
                 ranges_double[i] = (double) scan->ranges(num_ranges - i - 1);
         }
     } else {
-        for (unsigned int i = 0; i < scan->ranges().size(); i++) {
+        //for (unsigned int i = 0; i < scan->ranges().size(); i++) {
+        for (unsigned int i = 0; i < gsp_laser_beam_count_; i++) {
             // Must filter out short readings, because the mapper won't
             if (scan->ranges(i) < scan->range_min())
                 ranges_double[i] = (double) scan->range_max();
@@ -412,7 +386,12 @@ bool SlamGmappingComponent::addScan(
         }
     }
 
-    GMapping::RangeReading reading(static_cast<unsigned int>(scan->ranges().size()),
+    // GMapping::RangeReading reading(static_cast<unsigned int>(scan->ranges().size()),
+    //                                ranges_double,
+    //                                gsp_laser_,
+    //                                scan->header().timestamp_sec());
+
+    GMapping::RangeReading reading(static_cast<unsigned int>(gsp_laser_beam_count_),
                                    ranges_double,
                                    gsp_laser_,
                                    scan->header().timestamp_sec());
@@ -425,12 +404,14 @@ bool SlamGmappingComponent::addScan(
 
     ADEBUG << "processing scan";
 
+    AWARN << "addScan end ---------------------------------------";
+
     return gsp_->processScan(reading);
 }
 
 void SlamGmappingComponent::updateMap(const std::shared_ptr<apollo::akman::LaserScan>& scan)
 {
-    AINFO << "Update Map Start";
+    AWARN << "Update Map Start ------------------------------------------------------";
     map_mutex_.lock();
     GMapping::ScanMatcher matcher;
 
@@ -467,9 +448,7 @@ void SlamGmappingComponent::updateMap(const std::shared_ptr<apollo::akman::Laser
                                   delta_);
 
     AINFO << "Trajectory tree:";
-    for(GMapping::GridSlamProcessor::TNode* n = best.node;
-        n;
-        n = n->parent)
+    for(GMapping::GridSlamProcessor::TNode* n = best.node; n; n = n->parent)
     {
         AINFO << "x: " << n->pose.x << " y: " << n->pose.y << " theta: " << n->pose.theta;
         if(!n->reading)
@@ -514,15 +493,17 @@ void SlamGmappingComponent::updateMap(const std::shared_ptr<apollo::akman::Laser
             GMapping::IntPoint p(x, y);
             double occ=smap.cell(p);
             assert(occ <= 1.0);
-            if(occ < 0)
-                map_.set_data(static_cast<int>(MAP_IDX(map_.meta_data().width(), x, y)), -1);
-            else if(occ > occ_thresh_)
-            {
+            if(occ < 0) {
+                map_.add_data(-1);
+                //map_.set_data(static_cast<int>(MAP_IDX(map_.meta_data().width(), x, y)), -1);
+            } else if(occ > occ_thresh_) {
                 //map_.map.data[MAP_IDX(map_.map.info.width, x, y)] = (int)round(occ*100.0);
-                map_.set_data(static_cast<int>(MAP_IDX(map_.meta_data().width(), x, y)), 100);
+                //map_.set_data(static_cast<int>(MAP_IDX(map_.meta_data().width(), x, y)), 100);
+                map_.add_data(100);
+            } else {
+                //map_.set_data(static_cast<int>(MAP_IDX(map_.meta_data().width(), x, y)), 0);
+                map_.add_data(0);
             }
-            else
-                map_.set_data(static_cast<int>(MAP_IDX(map_.meta_data().width(), x, y)), 0);
         }
     }
     got_map_ = true;
@@ -534,6 +515,7 @@ void SlamGmappingComponent::updateMap(const std::shared_ptr<apollo::akman::Laser
     sst_writer_->Write(map_);
     sstm_writer_->Write(map_.meta_data());
     map_mutex_.unlock();
+    AWARN << "Update Map End ------------------------------------------------------";
 }
 
 void SlamGmappingComponent::laserCallback(const std::shared_ptr<apollo::akman::LaserScan>& scan) {
@@ -541,13 +523,14 @@ void SlamGmappingComponent::laserCallback(const std::shared_ptr<apollo::akman::L
     if ((laser_count_ % throttle_scans_) != 0)
         return;
     
-    last_map_update_ = cyber::Clock::Now().ToSecond();
+
 
     // We can't initialize the mapper until we've got the first scan
     if(!got_first_scan_)
     {
         if(!initMapper(*scan))
             return;
+        last_map_update_ = scan->header().timestamp_sec();
         got_first_scan_ = true;
     }
 
@@ -555,6 +538,7 @@ void SlamGmappingComponent::laserCallback(const std::shared_ptr<apollo::akman::L
 
     if(addScan(scan, odom_pose))
     {
+        AWARN << "addScan return true";
         GMapping::OrientedPoint mpose = gsp_->getParticles()[gsp_->getBestParticleIndex()].pose;
 
         tf2::Quaternion q;
@@ -568,14 +552,13 @@ void SlamGmappingComponent::laserCallback(const std::shared_ptr<apollo::akman::L
         map_to_odom_mutex_.unlock();
 
         auto timestamp = scan->header().timestamp_sec();
+        AINFO << "laser_scan_timestamp " << timestamp - last_map_update_;
         if(!got_map_ || (timestamp - last_map_update_) > map_update_interval_)
         {
             updateMap(scan);
             last_map_update_ = scan->header().timestamp_sec();
         }
     }
-
-
 }
 
 

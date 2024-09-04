@@ -1,0 +1,34 @@
+syntax = "proto2";
+
+package apollo.modules.air_map_server.map_service_msg.proto;
+
+import "modules/common_msgs/akman_msgs/occupancy_grid.proto";
+
+
+message load_map_request {
+    optional string map_url = 1;
+}
+
+message get_map_request {
+    optional int32 info = 1;
+}
+
+
+message load_map_response{
+   enum LoadStatus {
+    RESULT_MAP_DOES_NOT_EXIST = 0;
+    RESULT_INVALID_MAP_METADATA = 1;
+    RESULT_INVALID_MAP_DATA = 2;
+    RESULT_SUCCESS = 3;
+  }
+  required LoadStatus load_status = 1;
+  optional apollo.akman.OccupancyGrid map = 2;
+
+}
+
+message get_map_response{
+    required int32 get_result = 1;
+    optional apollo.akman.OccupancyGrid map = 2;
+}
+
+
