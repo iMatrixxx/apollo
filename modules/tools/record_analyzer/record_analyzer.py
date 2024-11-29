@@ -18,7 +18,8 @@
 
 import argparse
 import sys
-
+sys.path.append("/apollo/")
+sys.path.append("/apollo/bazel-bin/")
 import matplotlib.pyplot as plt
 
 from cyber.python.cyber_py3.record import RecordReader
@@ -144,6 +145,7 @@ if __name__ == "__main__":
     elif args.planningpath or args.planningrefpath:
         plt.axis('equal')
         plt.show()
+        plt.close()
     else:
         control_analyzer.print_latency_statistics()
         planning_analyzer.print_latency_statistics()

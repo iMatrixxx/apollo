@@ -30,21 +30,24 @@ def main():
     #start 587680.24, 4141269.34, 1.40
     #end  587683.12, 4141468.09, 2.91
     
+    # 587682.57 4141278.46 1.32
+    # 587716.10 4141416.60 1.35
+    
     # 从命令行选择起点坐标
     # start_heading = float(input("start_heading : "))
     # start_x = float(input("start_x : "))
     # start_y = float(input("start_y : "))
-    start_heading = float(1.40)
-    start_x = float(587680.24)
-    start_y = float(4141269.34)
+    start_heading = float(-1.65)
+    start_x = float(238372.69)
+    start_y = float(3493718.55)
 
     # 从命令行选择终点坐标
     # end_heading = float(input("end_heading: "))
     # end_x = float(input("end_x : "))
     # end_y = float(input("end_y: "))
-    end_heading = float(2.91)
-    end_x = float(587683.12)
-    end_y = float(4141468.09)
+    end_heading = float(1.48)
+    end_x = float(238495.47)
+    end_y = float(3493710.74)
 
     # 添加路径起点
     waypoint = routing_request.way_point.add()

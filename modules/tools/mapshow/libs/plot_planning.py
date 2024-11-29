@@ -18,6 +18,10 @@
 
 import argparse
 
+import sys
+sys.path.append("/apollo/")
+sys.path.append("/apollo/bazel-bin/")
+
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 
@@ -30,7 +34,7 @@ from modules.tools.mapshow.libs.subplot_sl_main import SlMainSubplot
 from modules.tools.mapshow.libs.subplot_speed import SpeedSubplot
 from modules.tools.mapshow.libs.subplot_st_main import StMainSubplot
 from modules.tools.mapshow.libs.subplot_st_speed import StSpeedSubplot
-
+from cyber.python.cyber_py3.record import RecordReader
 
 planning = Planning()
 localization = Localization()
@@ -86,31 +90,41 @@ if __name__ == '__main__':
         default=None,
         help="Specify the map file in txt or binary format")
     args = parser.parse_args()
-    cyber.init()
-    add_listener()
-    fig = plt.figure()
-    fig.canvas.mpl_connect('key_press_event', press_key)
+    # cyber.init()
+    # add_listener()
+    reader = RecordReader("/apollo/data/bag/demo_3.5.record")
+    icount = 0
+    for msg in reader.read_messages():
+        if msg.topic == "/apollo/planning":
+            planning_pb = planning_pb2.ADCTrajectory()
+            planning_pb.ParseFromString(msg.message)
+            
+            planning_callback(planning_pb)
+            
+            fig = plt.figure()
+            fig.canvas.mpl_connect('key_press_event', press_key)
 
-    ax = plt.subplot2grid((3, 3), (0, 0), rowspan=2, colspan=2)
-    map_path_subplot = PathSubplot(ax, args.map)
+            ax = plt.subplot2grid((3, 3), (0, 0), rowspan=2, colspan=2)
+            map_path_subplot = PathSubplot(ax, args.map)
 
-    ax1 = plt.subplot2grid((3, 3), (0, 2))
-    speed_subplot = SpeedSubplot(ax1)
+            ax1 = plt.subplot2grid((3, 3), (0, 2))
+            speed_subplot = SpeedSubplot(ax1)
 
-    ax2 = plt.subplot2grid((3, 3), (2, 2))
-    dp_st_main_subplot = StMainSubplot(ax2, 'QpSplineStSpeedOptimizer')
+            ax2 = plt.subplot2grid((3, 3), (2, 2))
+            dp_st_main_subplot = StMainSubplot(ax2, 'QpSplineStSpeedOptimizer')
 
-    ax3 = plt.subplot2grid((3, 3), (1, 2))
-    qp_st_main_subplot = StMainSubplot(ax3, 'DpStSpeedOptimizer')
+            ax3 = plt.subplot2grid((3, 3), (1, 2))
+            qp_st_main_subplot = StMainSubplot(ax3, 'DpStSpeedOptimizer')
 
-    ax4 = plt.subplot2grid((3, 3), (2, 0), colspan=1)
-    sl_main_subplot = SlMainSubplot(ax4)
+            ax4 = plt.subplot2grid((3, 3), (2, 0), colspan=1)
+            sl_main_subplot = SlMainSubplot(ax4)
 
-    ax5 = plt.subplot2grid((3, 3), (2, 1), colspan=1)
-    st_speed_subplot = StSpeedSubplot(ax5, 'QpSplineStSpeedOptimizer')
+            ax5 = plt.subplot2grid((3, 3), (2, 1), colspan=1)
+            st_speed_subplot = StSpeedSubplot(ax5, 'QpSplineStSpeedOptimizer')
 
-    ani = animation.FuncAnimation(fig, update, interval=100)
+            ani = animation.FuncAnimation(fig, update, interval=100)
 
-    ax.axis('equal')
-    plt.show()
-    cyber.shutdown()
+            ax.axis('equal')
+            plt.show()
+            plt.close()
+            # cyber.shutdown()

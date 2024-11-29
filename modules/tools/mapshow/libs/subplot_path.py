@@ -26,7 +26,7 @@ class PathSubplot:
         if map_file is not None:
             map = Map()
             map.load(map_file)
-            map.draw_lanes(ax, False, [])
+            map.draw_lanes(ax, False, [], False)
         self.path_lines = []
         self.path_lines_size = 3
         colors = ['b', 'g', 'r', 'k']

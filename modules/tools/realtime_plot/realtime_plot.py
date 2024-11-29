@@ -19,9 +19,17 @@
 
 import math
 import sys
-import threading
+sys.path.append("/apollo/")
+sys.path.append("/apollo/bazel-bin/")
+sys.path.append("/apollo/modules/")
+sys.path.append("/apollo/cyber/")
 
+import threading
+import time
 import gflags
+
+# import matplotlib
+# matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -237,6 +245,7 @@ def main(argv):
         chassis_sub.create_reader('/apollo/canbus/chassis',
                                   Chassis, plotter.callback_chassis)
 
+    time.sleep(3)
     while not cyber.is_shutdown():
         ax1.draw_artist(ax1.patch)
         ax2.draw_artist(ax2.patch)
@@ -253,6 +262,7 @@ def main(argv):
         fig.canvas.blit(ax2.bbox)
         fig.canvas.blit(ax3.bbox)
         fig.canvas.blit(ax4.bbox)
+        
         fig.canvas.flush_events()
 
 

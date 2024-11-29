@@ -97,6 +97,7 @@ if __name__ == '__main__':
     base_map = util.get_mapdata(map_dir)
     
     reader = RecordReader("/apollo/data/bag/test.record.00000.20240716170235")
+    icount = 0
     for msg in reader.read_messages():
         if msg.topic == "/apollo/routing_response":
             route = routing_pb2.RoutingResponse()
@@ -107,23 +108,26 @@ if __name__ == '__main__':
                 central_curves[nd.lane_id] = nd.central_curve
 
             plt.ion()
-            while 1:
-                print_help_command()
-                print('cmd>', end=' ')
-                instruction = input()
-                argv = instruction.strip(' ').split(' ')
-                if len(argv) == 1:
-                    if argv[0] == 'q':
-                        sys.exit(0)
-                    elif argv[0] == 'r':
-                        plot_route(route.road, central_curves)
-                    elif argv[0] == 'r_map':
-                        plot_route(route.road, central_curves)
-                        util.draw_map(plt.gca(), base_map)
-                    else:
-                        print('[ERROR] wrong command')
-                    continue
-
+            print("routing count: ")
+            print("routing count: %d ." % (icount))
+            icount = icount + 1
+            # while 1:
+            print_help_command()
+            print('cmd>', end=' ')
+            instruction = input()
+            argv = instruction.strip(' ').split(' ')
+            if len(argv) == 1:
+                if argv[0] == 'q':
+                    sys.exit(0)
+                elif argv[0] == 'r':
+                    plot_route(route.road, central_curves)
+                elif argv[0] == 'r_map':
+                    plot_route(route.road, central_curves)
+                    util.draw_map(plt.gca(), base_map)
                 else:
-                    print('[ERROR] wrong arguments')
-                    continue
+                    print('[ERROR] wrong command')
+                continue
+
+            else:
+                print('[ERROR] wrong arguments')
+                continue
